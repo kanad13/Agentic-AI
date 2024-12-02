@@ -15,7 +15,7 @@ from langchain_community.utilities import WikipediaAPIWrapper
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
-from langchain.schema import HumanMessage
+from langchain.schema import AIMessage, HumanMessage
 
 # Load environment variables
 load_dotenv()
@@ -93,21 +93,40 @@ config = {"configurable": {"thread_id": unique_id}}
 agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
 
 # Custom prompts
-custom_prompt_template = "Keep your answers limited to one word while answering this question: {query}"
+custom_prompt_template = "Keep your answers brief while answering this question: {query}"
 
 # Function to stream responses
 def stream_query_response(query):
+    # Get all previous messages from chat history
+    previous_messages = []
+    for chat in st.session_state.chat_history:
+        previous_messages.append(HumanMessage(content=chat['user']))
+        if chat['bot'] and isinstance(chat['bot'], (str, dict)):
+            # Extract string content from bot response if it's a dict
+            bot_content = chat['bot']['messages'][-1].content if isinstance(chat['bot'], dict) else chat['bot']
+            previous_messages.append(AIMessage(content=str(bot_content)))
+
+    # Add current query
+    previous_messages.append(HumanMessage(content=query))
+
     custom_prompt = custom_prompt_template.format(query=query)
     final_response = ""
 
-    # Stream the response from the agent
-    for event in agent_executor_with_memory.stream(
-        {"messages": [HumanMessage(content=custom_prompt)]},
-        config=config,
-        stream_mode="values",
-    ):
-        final_response = event
-        yield final_response
+    try:
+        # Stream the response from the agent with full message history
+        for event in agent_executor_with_memory.stream(
+            {"messages": previous_messages},
+            config=config,
+            stream_mode="values",
+        ):
+            if isinstance(event, (str, dict)):
+                # Extract string content if event is a dict
+                final_response = event['messages'][-1].content if isinstance(event, dict) else event
+                yield str(final_response)
+
+    except Exception as e:
+        st.error(f"Error processing response: {str(e)}")
+        yield "I encountered an error processing your request."
 
 # Initialize session state for chat history
 if 'chat_history' not in st.session_state:
