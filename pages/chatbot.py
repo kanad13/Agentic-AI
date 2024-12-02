@@ -1,16 +1,12 @@
-# streamlit_chatbot.py
-
 import streamlit as st
 from dotenv import load_dotenv
 import os
 import uuid
 import bs4
 from langchain_openai import ChatOpenAI
-os.environ['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-#from langchain.vectorstores import FAISS
 from langchain_community.vectorstores import FAISS
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -43,11 +39,15 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 embedding_batch_size = 512
 
 # Define RAG tool
-loader = WebBaseLoader(
-    web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
-    bs_kwargs={"parse_only": bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))},
-)
-docs = loader.load()
+@st.cache_resource
+def load_documents():
+    loader = WebBaseLoader(
+        web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
+        bs_kwargs={"parse_only": bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))},
+    )
+    return loader.load()
+
+docs = load_documents()
 
 # Split webpage data
 text_splitter = RecursiveCharacterTextSplitter(
@@ -56,11 +56,15 @@ text_splitter = RecursiveCharacterTextSplitter(
 all_splits = text_splitter.split_documents(docs)
 
 # Compute embeddings and index them
-embedding_wrapper = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-mpnet-base-v2",
-    encode_kwargs={'batch_size': embedding_batch_size}
-)
-vectorstore = FAISS.from_documents(documents=all_splits, embedding=embedding_wrapper)
+@st.cache_resource
+def create_vectorstore():
+    embedding_wrapper = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-mpnet-base-v2",
+        encode_kwargs={'batch_size': embedding_batch_size}
+    )
+    return FAISS.from_documents(documents=all_splits, embedding=embedding_wrapper)
+
+vectorstore = create_vectorstore()
 
 # Create a retriever object
 retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
