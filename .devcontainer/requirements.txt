@@ -1,0 +1,40 @@
+#standard
+#cowsay
+ipykernel
+ipywidgets
+#pandas
+requests
+python-dotenv
+#nbformat # needed for graphql
+#jsonlines
+#matplotlib
+
+# langchain
+langchain
+#langgraph
+#langgraph-cli
+#langchain-core
+#langchain-community
+#langchainhub
+langchain-groq
+langchain-openai
+#langchain_ollama
+#langgraph-api-inmem
+wikipedia
+
+#nlp
+#torch --pre -f https://download.pytorch.org/whl/nightly/cpu
+#torchvision --pre -f https://download.pytorch.org/whl/nightly/cpu
+#torchaudio --pre -f https://download.pytorch.org/whl/nightly/cpu
+accelerate
+transformers
+sentence-transformers
+faiss-cpu
+langchain-huggingface
+
+#rag
+bs4 # beautifulsoup4
+#pypdf
+#tiktoken
+#chromadb
+#langchain-text-splitters
