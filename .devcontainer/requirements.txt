@@ -11,15 +11,15 @@ python-dotenv
 
 # langchain
 langchain
-#langgraph
-#langgraph-cli
-#langchain-core
-#langchain-community
+langchain-core
+langchain-community
 #langchainhub
 langchain-groq
 langchain-openai
 #langchain_ollama
 #langgraph-api-inmem
+langgraph
+langgraph-cli
 wikipedia
 
 #nlp
@@ -38,3 +38,4 @@ bs4 # beautifulsoup4
 #tiktoken
 #chromadb
 #langchain-text-splitters
+streamlit

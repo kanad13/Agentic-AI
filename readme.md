@@ -4,7 +4,7 @@
 
 It dynamically decides which tool to invoke - be it a retrieval system, web search, or Wikipedia query - depending on the user's question. This ensures precise and relevant answers every time.
 
-## 🚀 Features
+## Features
 
 - **Dynamic Tool Selection**: The agent intelligently decides which tool to use based on the query.
 - **Retrieval-Augmented Generation (RAG)**: Accesses a custom knowledge base with FAISS-backed retrieval for accurate responses.
