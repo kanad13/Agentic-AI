@@ -96,7 +96,7 @@ agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memor
 custom_prompt_template = "Keep your answers brief while answering this question: {query}"
 
 # Function to stream responses
-def stream_query_response(query):
+def stream_query_response(query, debug_mode=False):
     # Get all previous messages from chat history
     previous_messages = []
     for chat in st.session_state.chat_history:
@@ -124,6 +124,11 @@ def stream_query_response(query):
                 final_response = event['messages'][-1].content if isinstance(event, dict) else event
                 yield str(final_response)
 
+                # Conditionally show event data
+                if debug_mode:
+                    with st.expander("Show Event Data"):
+                        st.write("Event Details:", event)
+
     except Exception as e:
         st.error(f"Error processing response: {str(e)}")
         yield "I encountered an error processing your request."
@@ -134,6 +139,10 @@ if 'chat_history' not in st.session_state:
 
 # Streamlit UI
 st.title("LangChain Chatbot with Streamlit Frontend")
+
+# Debug mode toggle in the sidebar
+st.sidebar.title("Settings")
+debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
 
 # Display chat history
 for chat in st.session_state.chat_history:
@@ -153,7 +162,7 @@ if st.button("Send") and user_input:
     response_placeholder = st.empty()
 
     # Stream the response
-    for response in stream_query_response(user_input):
+    for response in stream_query_response(user_input, debug_mode=debug_mode):  # Pass debug_mode here
         st.session_state.chat_history[latest_index]['bot'] = response
         # Update the placeholder with the latest response
         response_placeholder.markdown(f"**Bot:** {response}")
