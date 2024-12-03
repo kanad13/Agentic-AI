@@ -72,15 +72,15 @@ retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k
 # Define tools
 retriever_tool = create_retriever_tool(
     retriever,
-    "blog_post_retriever",
-    "Searches and returns excerpts from the Autonomous Agents blog post.",
+    "pdf_document_retriever",
+    "Retrieves and provides information from the available PDF documents.",
 )
 
-search = TavilySearchResults(max_results=2)
+internet_search = TavilySearchResults(max_results=2)
 
-wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+wikipedia_search = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 
-tools = [search, wikipedia, retriever_tool]
+tools = [retriever_tool, wikipedia_search, internet_search]
 
 # Setup memory
 # Remember to add memory filtering later - https://langchain-ai.github.io/langgraph/how-tos/memory/manage-conversation-history/
@@ -94,7 +94,47 @@ config = {"configurable": {"thread_id": unique_id}}
 agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
 
 # Custom prompts
-custom_prompt_template = "Respond briefly to this statement - , : {query}"
+custom_prompt_template = """
+
+You are an AI assistant equipped with the following tools:
+- **PDF Document Retriever**: Retrieves information from available PDF documents.
+- **Wikipedia Search Tool**: Fetches information from Wikipedia articles.
+- **Internet Search Tool**: Conducts real-time internet searches for current information.
+
+When answering queries, follow this sequence:
+1. **PDF Documents**: Check the PDF documents first for relevant information.
+2. **Wikipedia**: If the information isn't found in PDFs, search Wikipedia.
+3. **Internet Search**: If the information isn't found in PDFs or Wikipedia, perform an internet search.
+4. **Internal Knowledge**: If all tools lack the information, rely on your internal knowledge.
+
+Use the following format:
+- **Question**: The user's query.
+- **Thought**: Your reasoning about which tool to use.
+- **Action**: The action you will take (e.g., calling a tool).
+- **Action Input**: The input for the action.
+- **Observation**: The result of the action.
+- **Final Answer**: Your response to the user's query.
+
+**Examples**:
+
+**Example 1**:
+- **Question**: "What are the main features of the Autonomous Agents blog post?"
+- **Thought**: The information is likely in the PDF documents.
+- **Action**: Call `pdf_document_retriever`
+- **Action Input**: "Autonomous Agents blog post features"
+- **Observation**: [PDF content]
+- **Final Answer**: [Answer based on PDF content]
+
+**Example 2**:
+- **Question**: "Who is the current CEO of OpenAI?"
+- **Thought**: This information is best found through an internet search.
+- **Action**: Call `internet_search`
+- **Action Input**: "Current CEO of OpenAI"
+- **Observation**: [Search results]
+- **Final Answer**: [Answer based on search results]
+
+Begin by addressing the user's query using this approach : {query}
+"""
 
 # Function to stream responses
 def stream_query_response(query, debug_mode=False):
