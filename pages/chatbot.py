@@ -83,6 +83,7 @@ wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 tools = [search, wikipedia, retriever_tool]
 
 # Setup memory
+# Remember to add memory filtering later - https://langchain-ai.github.io/langgraph/how-tos/memory/manage-conversation-history/
 memory = MemorySaver()
 
 # Use threads
@@ -134,10 +135,11 @@ def stream_query_response(query, debug_mode=False):
         yield "I encountered an error processing your request."
 
 # Initialize session state for chat history
+# Initialize session state for chat history
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 
-# Streamlit UI
+# Display chat history
 st.title("LangChain Chatbot with Streamlit Frontend")
 
 # Debug mode toggle in the sidebar
@@ -146,23 +148,28 @@ debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
 
 # Display chat history
 for chat in st.session_state.chat_history:
-    with st.container():
-        st.markdown(f"**User:** {chat['user']}")
-        st.markdown(f"**Bot:** {chat['bot']}")
+    with st.chat_message("user"):
+        st.write(chat['user'])
+    if chat['bot']:
+        with st.chat_message("assistant"):
+            st.write(chat['bot'])
 
 # User input
-user_input = st.text_input("You:", key="input")
-
-if st.button("Send") and user_input:
+if user_input := st.chat_input("You:"):  # Chat input replaces text_input + button
     # Add user message to chat history
     st.session_state.chat_history.append({"user": user_input, "bot": ""})
     latest_index = len(st.session_state.chat_history) - 1
 
-    # Placeholder for bot response
-    response_placeholder = st.empty()
+    # Display the user's input
+    with st.chat_message("user"):
+        st.write(user_input)
 
-    # Stream the response
-    for response in stream_query_response(user_input, debug_mode=debug_mode):  # Pass debug_mode here
-        st.session_state.chat_history[latest_index]['bot'] = response
-        # Update the placeholder with the latest response
-        response_placeholder.markdown(f"**Bot:** {response}")
+    # Placeholder for bot response
+    with st.chat_message("assistant"):
+        response_placeholder = st.empty()
+
+        # Stream the response
+        for response in stream_query_response(user_input, debug_mode=debug_mode):
+            st.session_state.chat_history[latest_index]['bot'] = response
+            # Update the placeholder with the latest response
+            response_placeholder.markdown(response)
