@@ -34,7 +34,7 @@ langchain-huggingface
 
 #rag
 bs4 # beautifulsoup4
-#pypdf
+pypdf
 #tiktoken
 #chromadb
 #langchain-text-splitters

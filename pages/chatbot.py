@@ -4,7 +4,9 @@ import os
 import uuid
 import bs4
 from langchain_openai import ChatOpenAI
-from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import PyPDFLoader
+#https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFDirectoryLoader.html
+from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -41,11 +43,9 @@ embedding_batch_size = 512
 # Define RAG tool
 @st.cache_resource
 def load_documents():
-    loader = WebBaseLoader(
-        web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
-        bs_kwargs={"parse_only": bs4.SoupStrainer(class_=("post-title", "post-header", "post-content"))},
-    )
-    return loader.load()
+      #loader = PyPDFLoader(file_path="./input_files/Laptop-Man.pdf")
+      loader = PyPDFDirectoryLoader(path="./input_files/")
+      return loader.load()
 
 docs = load_documents()
 
@@ -94,7 +94,7 @@ config = {"configurable": {"thread_id": unique_id}}
 agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
 
 # Custom prompts
-custom_prompt_template = "Keep your answers brief while answering this question: {query}"
+custom_prompt_template = "Respond briefly to this statement - , : {query}"
 
 # Function to stream responses
 def stream_query_response(query, debug_mode=False):
