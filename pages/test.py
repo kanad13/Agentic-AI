@@ -340,13 +340,10 @@ workflow.add_edge("rewrite", "agent")
 graph = workflow.compile()
 
 ##################
-# The only section that needs to change is the Streamlit Chat Interface part at the bottom of the file
-# Replace the existing chat interface code with this:
-
 # Streamlit Chat Interface
 # Initialize session state
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [HumanMessage(content="How can I help you?")]
+    st.session_state["messages"] = [AIMessage(content="How can I help you?")]
 
 # Display chat messages
 for msg in st.session_state.messages:
