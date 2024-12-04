@@ -340,8 +340,10 @@ workflow.add_edge("rewrite", "agent")
 graph = workflow.compile()
 
 ##################
-# Streamlit Chat Interface
+# The only section that needs to change is the Streamlit Chat Interface part at the bottom of the file
+# Replace the existing chat interface code with this:
 
+# Streamlit Chat Interface
 # Initialize session state
 if "messages" not in st.session_state:
     st.session_state["messages"] = [HumanMessage(content="How can I help you?")]
@@ -355,27 +357,21 @@ for msg in st.session_state.messages:
 
 # Handle user input
 if prompt := st.chat_input("Type your message here..."):
-    # Append user message
     st.session_state.messages.append(HumanMessage(content=prompt))
     st.chat_message("user").write(prompt)
 
-    # Prepare inputs for the graph
-    inputs = {
-        "messages": st.session_state.messages
-    }
+    inputs = {"messages": st.session_state.messages}
 
-    # Placeholder for assistant response
     with st.chat_message("assistant"):
-        assistant_placeholder = st.empty()
+        message_placeholder = st.empty()
+        full_response = ""
 
-    # Run the graph and stream responses
-    for output in graph.stream(inputs):
-        for key, value in output.items():
-            assistant_placeholder.markdown(f"**Output from node '{key}':**\n\n```json\n{pprint.pformat(value, indent=2, width=80)}\n```")
-            # Optionally, you can parse and display the assistant's response more elegantly
-            if key == "generate":
-                response_content = value.get("messages", [{}])[0].get("content", "")
-                st.session_state.messages.append(AIMessage(content=response_content))
-                assistant_placeholder.write(response_content)
+        for output in graph.stream(inputs):
+            for key, value in output.items():
+                if key == "agent" and isinstance(value.get("messages", [{}])[0], AIMessage):
+                    response_content = value["messages"][0].content
+                    message_placeholder.write(response_content)
+                    full_response = response_content
 
-    st.session_state.messages.append(AIMessage(content=""))  # To ensure the assistant message is stored
+        if full_response:
+            st.session_state.messages.append(AIMessage(content=full_response))
