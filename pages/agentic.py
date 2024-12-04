@@ -1,9 +1,10 @@
+#https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_agentic_rag
 import streamlit as st
 from dotenv import load_dotenv
 import os
 import uuid
 import pprint
-
+from langchain.schema import HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -342,8 +343,15 @@ graph = workflow.compile()
 ##################
 # Streamlit Chat Interface
 # Initialize session state
+import streamlit as st
+
+# Initialize session state for messages if not already present
 if "messages" not in st.session_state:
     st.session_state["messages"] = [AIMessage(content="How can I help you?")]
+
+# Debug mode toggle in the sidebar
+st.sidebar.title("Settings")
+debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
 
 # Display chat messages
 for msg in st.session_state.messages:
@@ -370,5 +378,12 @@ if prompt := st.chat_input("Type your message here..."):
                     message_placeholder.write(response_content)
                     full_response = response_content
 
+                    # Debug Mode: Display additional information
+                    if debug_mode:
+                        st.sidebar.write(f"Debug: {key} - {value}")
+
         if full_response:
             st.session_state.messages.append(AIMessage(content=full_response))
+            # Debug Mode: Log the full response in sidebar
+            if debug_mode:
+                st.sidebar.write(f"Debug: Full response - {full_response}")
