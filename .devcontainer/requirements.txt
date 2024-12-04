@@ -16,7 +16,7 @@ langchain-community
 #langchainhub
 langchain-groq
 langchain-openai
-#langchain_ollama
+langchain_ollama
 #langgraph-api-inmem
 langgraph
 langgraph-cli
