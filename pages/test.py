@@ -3,11 +3,16 @@ from dotenv import load_dotenv
 import os
 import uuid
 from langchain_openai import ChatOpenAI
+from langchain_community.document_loaders import PyPDFLoader
+#https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFDirectoryLoader.html
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.tools.retriever import create_retriever_tool
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
@@ -30,14 +35,20 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
+LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2')
 
 # Define the model
 model = ChatOpenAI(model="gpt-4o-mini")
+
+# Additional configurations
+does_model_support_streaming = True
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 embedding_batch_size = 512
 
 # Define RAG tool and load documents
 @st.cache_resource
 def load_documents():
+      #loader = PyPDFLoader(file_path="./input_files/Laptop-Man.pdf")
     loader = PyPDFDirectoryLoader(path="./input_files/")
     return loader.load()
 
@@ -70,10 +81,17 @@ retriever_tool = create_retriever_tool(
     "Retrieves and provides information from the available PDF documents."
 )
 
+internet_search = TavilySearchResults(max_results=2)
+
+wikipedia_search = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+
+#tools = [retriever_tool, wikipedia_search, internet_search]
 tools = [retriever_tool]
 
 # Setup memory management for conversation history
+# Remember to add memory filtering later - https://langchain-ai.github.io/langgraph/how-tos/memory/manage-conversation-history/
 memory = MemorySaver()
+
 
 # Create agent with memory support using LangChain's REACT framework
 agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
@@ -81,7 +99,7 @@ agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memor
 # Custom prompt template for RAG chatbot responses
 custom_prompt_template = """
 You are a Retrieval-Augmented Generation (RAG) chatbot. When responding to user inquiries, adhere to these guidelines:
-1. **Source-Based Responses**: Respond exclusively using the information provided in the retrieved documents by the retriever_tool.
+1. **Source-Based Responses**: Respond exclusively using the information provided in the retrieved documents by the pdf_document_retriever.
 2. **Transparency in Uncertainty**: If the retrieved information does not address the user's question, respond with: "I'm sorry, but I don't have the information to answer that question." Avoid fabricating or speculating on information.
 3. **Citation of Sources**: Always cite your source for information e.g., the name of the input document that was used to retrieve the information.
 4. **Clarity and Conciseness**: Communicate in a clear and concise manner.
@@ -99,6 +117,13 @@ def stream_query_response(query, debug_mode=False):
             previous_messages.append(AIMessage(content=str(bot_content)))
 
     previous_messages.append(HumanMessage(content=query))
+
+    # Trim the messages to fit within the token limit
+    # https://python.langchain.com/docs/how_to/trim_messages
+		# input_tokens: Number of tokens in the input messages sent to the model. This should align with your `max_tokens` setting if trimming is applied correctly.
+    # output_tokens: Number of tokens in the model's response. Check out the trace in debug mode.
+		# total_tokens: Sum of `input_tokens` and `output_tokens`, representing the entire interaction's token count.
+		# completion_tokens: Similar to `output_tokens`, indicating tokens used for the model's generated response.
 
     trimmed_messages = trim_messages(
         previous_messages,
