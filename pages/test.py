@@ -2,10 +2,9 @@ import streamlit as st
 from dotenv import load_dotenv
 import os
 import uuid
-import bs4
+import pprint
+
 from langchain_openai import ChatOpenAI
-from langchain_community.document_loaders import PyPDFLoader
-#https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFDirectoryLoader.html
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -19,28 +18,41 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
 from langchain.schema import AIMessage, HumanMessage
 from langchain_core.messages import trim_messages
-import streamlit as st
-from dotenv import load_dotenv
-import os
-from langchain.schema import AIMessage, HumanMessage, BaseMessage
-from langchain_core.messages import trim_messages
-from langgraph.graph.message import add_messages
+
 from typing import Annotated, Sequence, Literal
 from typing_extensions import TypedDict
+
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
+
+from langchain import hub
+from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel, Field
+
+from langgraph.graph import END, StateGraph, START
+from langgraph.prebuilt import ToolNode
+from langgraph.prebuilt import tools_condition
 
 # Load environment variables
 load_dotenv()
 
-# Initialize necessary components
-config = {'scrollZoom': True, 'displayModeBar': True, 'displaylogo': False}
-st.set_page_config(page_title="ChatBot", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
+# Initialize Streamlit page
+st.set_page_config(
+    page_title="ChatBot",
+    page_icon=":chat-plus-outline:",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
 LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2')
+
+# Initialize necessary components
+config = {'scrollZoom': True, 'displayModeBar': True, 'displaylogo': False}
 
 # Define the model
 model = ChatOpenAI(model="gpt-4o-mini")
@@ -53,13 +65,12 @@ embedding_batch_size = 512
 # Define RAG tool
 @st.cache_resource
 def load_documents():
-      #loader = PyPDFLoader(file_path="./input_files/Laptop-Man.pdf")
-      loader = PyPDFDirectoryLoader(path="./input_files/")
-      return loader.load()
+    loader = PyPDFDirectoryLoader(path="./input_files/")
+    return loader.load()
 
 docs = load_documents()
 
-# Split webpage data
+# Split documents into chunks
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000, chunk_overlap=200, add_start_index=True
 )
@@ -154,7 +165,7 @@ def grade_documents(state) -> Literal["generate", "rewrite"]:
         binary_score: str = Field(description="Relevance score 'yes' or 'no'")
 
     # LLM
-    model = ChatOpenAI(temperature=0, model="gpt-4-0125-preview", streaming=True)
+    model = ChatOpenAI(temperature=0, model="gpt-4o-mini", streaming=True)
 
     # LLM with tool and validation
     llm_with_tool = model.with_structured_output(grade)
@@ -243,7 +254,7 @@ def rewrite(state):
     ]
 
     # Grader
-    model = ChatOpenAI(temperature=0, model="gpt-4-0125-preview", streaming=True)
+    model = ChatOpenAI(temperature=0, model="gpt-4o-mini", streaming=True)
     response = model.invoke(msg)
     return {"messages": [response]}
 
@@ -269,7 +280,7 @@ def generate(state):
     prompt = hub.pull("rlm/rag-prompt")
 
     # LLM
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, streaming=True)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0, streaming=True)
 
     # Post-processing
     def format_docs(docs):
@@ -329,83 +340,42 @@ workflow.add_edge("rewrite", "agent")
 graph = workflow.compile()
 
 ##################
+# Streamlit Chat Interface
 
-# Function to stream responses
-def stream_query_response(query, debug_mode=False):
-    # Get all previous messages from chat history
-    messages = []
-    for chat in st.session_state.chat_history:
-        messages.append(("user", chat['user']))
-        if chat['bot']:
-            messages.append(("assistant", chat['bot']))
-    # Add current query
-    messages.append(("user", query))
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state["messages"] = [HumanMessage(content="How can I help you?")]
 
-    # Prepare inputs for graph.stream
-    inputs = {"messages": messages}
+# Display chat messages
+for msg in st.session_state.messages:
+    if isinstance(msg, HumanMessage):
+        st.chat_message("user").write(msg.content)
+    elif isinstance(msg, AIMessage):
+        st.chat_message("assistant").write(msg.content)
 
-    try:
-        bot_response = ""
-        for output in graph.stream(inputs):
-            # Process the output
-            if 'messages' in output:
-                last_message = output['messages'][-1]
-                if isinstance(last_message, BaseMessage):
-                    content = last_message.content
-                else:
-                    content = str(last_message)
-                # Append content to bot_response
-                bot_response = content
-                yield bot_response
-            else:
-                # Handle other outputs if necessary
-                pass
+# Handle user input
+if prompt := st.chat_input("Type your message here..."):
+    # Append user message
+    st.session_state.messages.append(HumanMessage(content=prompt))
+    st.chat_message("user").write(prompt)
 
-            if debug_mode:
-                with st.expander("Show Event Data"):
-                    st.write("Event Details:", output)
+    # Prepare inputs for the graph
+    inputs = {
+        "messages": st.session_state.messages
+    }
 
-    except Exception as e:
-        st.error(f"Error processing response: {str(e)}")
-        yield "I encountered an error processing your request."
+    # Placeholder for assistant response
+    with st.chat_message("assistant"):
+        assistant_placeholder = st.empty()
 
-# Initialize session state for chat history
-if 'chat_history' not in st.session_state:
-    st.session_state.chat_history = []
+    # Run the graph and stream responses
+    for output in graph.stream(inputs):
+        for key, value in output.items():
+            assistant_placeholder.markdown(f"**Output from node '{key}':**\n\n```json\n{pprint.pformat(value, indent=2, width=80)}\n```")
+            # Optionally, you can parse and display the assistant's response more elegantly
+            if key == "generate":
+                response_content = value.get("messages", [{}])[0].get("content", "")
+                st.session_state.messages.append(AIMessage(content=response_content))
+                assistant_placeholder.write(response_content)
 
-# Display chat history
-st.title("LangChain Chatbot with Streamlit Frontend")
-
-# Debug mode toggle in the sidebar
-st.sidebar.title("Settings")
-debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
-
-# Display existing chat history
-for chat in st.session_state.chat_history:
-    with st.chat_message("user"):
-        st.markdown(chat['user'])
-    if chat['bot']:
-        with st.chat_message("assistant"):
-            st.markdown(chat['bot'])
-
-# User input
-if user_input := st.chat_input("You:"):
-    # Add user message to chat history
-    st.session_state.chat_history.append({"user": user_input, "bot": ""})
-    latest_index = len(st.session_state.chat_history) - 1
-
-    # Display the user's input
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    # Placeholder for bot response
-    with st.chat_message("assistant") as container:
-        response_placeholder = container.empty()
-
-        # Stream the response
-        for response in stream_query_response(user_input, debug_mode=debug_mode):
-            # Update the session state with the latest bot response
-            st.session_state.chat_history[latest_index]['bot'] = response
-
-            # Update the placeholder with the latest response chunk
-            response_placeholder.markdown(response)
+    st.session_state.messages.append(AIMessage(content=""))  # To ensure the assistant message is stored
