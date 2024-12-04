@@ -3,9 +3,8 @@ from dotenv import load_dotenv
 import os
 import uuid
 from langchain_openai import ChatOpenAI
-from langchain_community.document_loaders import PyPDFLoader
 #https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFDirectoryLoader.html
-from langchain_community.document_loaders import PyPDFDirectoryLoader
+from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -92,20 +91,28 @@ tools = [retriever_tool]
 # Remember to add memory filtering later - https://langchain-ai.github.io/langgraph/how-tos/memory/manage-conversation-history/
 memory = MemorySaver()
 
-
 # Create agent with memory support using LangChain's REACT framework
 agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
 
 # Custom prompt template for RAG chatbot responses
 custom_prompt_template = """
 You are a Retrieval-Augmented Generation (RAG) chatbot. When responding to user inquiries, adhere to these guidelines:
-1. **Source-Based Responses**: Respond exclusively using the information provided in the retrieved documents by the pdf_document_retriever.
-2. **Transparency in Uncertainty**: If the retrieved information does not address the user's question, respond with: "I'm sorry, but I don't have the information to answer that question." Avoid fabricating or speculating on information.
-3. **Citation of Sources**: Always cite your source for information e.g., the name of the input document that was used to retrieve the information.
-4. **Clarity and Conciseness**: Communicate in a clear and concise manner.
-5. **Neutral Tone**: Maintain a neutral and informative tone.
-Use guidelines above to respond to this input from the user: {query}
+1. **Source-Based Responses**: Respond using information from retrieved documents when relevance is high.
+2. **Fallback Explanation**: If relevance is low, explain that you're using alternative methods to gather information (e.g., Wikipedia or internet search).
+3. **Transparency in Uncertainty**: If you cannot answer, respond with: "I'm sorry, but I don't have the information to answer that question."
+4. **Citation of Sources**: Always cite your source (e.g., PDF document name, Wikipedia link).
+5. **Clarity and Conciseness**: Communicate clearly and concisely.
+6. **Neutral Tone**: Maintain a neutral and informative tone.
+
+Respond to this input from the user: {query}
 """
+
+# Dynamic tool selection based on relevance
+def select_tool(query, retrieved_docs):
+    if not retrieved_docs or all(doc["relevance_score"] < 0.7 for doc in retrieved_docs):
+        st.info("Documents have low relevance. Switching to internet search...")
+        return internet_search.run(query)
+    return retriever_tool.run(query)
 
 # Function to stream responses from LangChain agent with trimmed message history
 def stream_query_response(query, debug_mode=False):
@@ -124,7 +131,6 @@ def stream_query_response(query, debug_mode=False):
     # output_tokens: Number of tokens in the model's response. Check out the trace in debug mode.
 		# total_tokens: Sum of `input_tokens` and `output_tokens`, representing the entire interaction's token count.
 		# completion_tokens: Similar to `output_tokens`, indicating tokens used for the model's generated response.
-
     trimmed_messages = trim_messages(
         previous_messages,
         strategy="last",
@@ -141,7 +147,16 @@ def stream_query_response(query, debug_mode=False):
     try:
         for event in agent_executor_with_memory.stream({"messages": trimmed_messages}, config={"configurable": {"thread_id": str(uuid.uuid4())}}, stream_mode="values"):
             final_response = event['messages'][-1].content if isinstance(event, dict) else event
+
+            # Conditional edge for low relevance
+            if "relevance_score" in event and event["relevance_score"] < 0.7:
+                yield "The retrieved documents may not be highly relevant. Attempting additional resources..."
+                secondary_tool_response = wikipedia_search.run(query)
+                yield str(secondary_tool_response)
+                break
+
             yield str(final_response)
+
             if debug_mode:
                 with st.expander("Show Event Data"):
                     st.write("Event Details:", event)
