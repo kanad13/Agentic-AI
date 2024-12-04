@@ -18,6 +18,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
 from langchain.schema import AIMessage, HumanMessage
+from langchain_core.messages import trim_messages
 
 # Load environment variables
 load_dotenv()
@@ -80,7 +81,8 @@ internet_search = TavilySearchResults(max_results=2)
 
 wikipedia_search = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 
-tools = [retriever_tool, wikipedia_search, internet_search]
+#tools = [retriever_tool, wikipedia_search, internet_search]
+tools = [retriever_tool]
 
 # Setup memory
 # Remember to add memory filtering later - https://langchain-ai.github.io/langgraph/how-tos/memory/manage-conversation-history/
@@ -95,46 +97,27 @@ agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memor
 
 # Custom prompts
 custom_prompt_template = """
+You are a Retrieval-Augmented Generation (RAG) chatbot. When responding to user inquiries, adhere to these guidelines:
 
-You are an AI assistant equipped with the following tools:
-- **PDF Document Retriever**: Retrieves information from available PDF documents.
-- **Wikipedia Search Tool**: Fetches information from Wikipedia articles.
-- **Internet Search Tool**: Conducts real-time internet searches for current information.
+1. **Source-Based Responses**: Respond exclusively using the information provided in the retrieved documents by the retriever_tool.
 
-When answering queries, follow this sequence:
-1. **PDF Documents**: Check the PDF documents first for relevant information.
-2. **Wikipedia**: If the information isn't found in PDFs, search Wikipedia.
-3. **Internet Search**: If the information isn't found in PDFs or Wikipedia, perform an internet search.
-4. **Internal Knowledge**: If all tools lack the information, rely on your internal knowledge.
+2. **Transparency in Uncertainty**: If the retrieved information does not address the user's question, respond with: "I'm sorry, but I don't have the information to answer that question." Avoid fabricating or speculating on information.  Do not generate content beyond the retrieved data.
 
-Use the following format:
-- **Question**: The user's query.
-- **Thought**: Your reasoning about which tool to use.
-- **Action**: The action you will take (e.g., calling a tool).
-- **Action Input**: The input for the action.
-- **Observation**: The result of the action.
-- **Final Answer**: Your response to the user's query.
+3. **Citation of Sources**: Always cite your source for information e.g. the name of the input document that was used to retreive the information.
 
-**Examples**:
+4. **Clarity and Conciseness**: Communicate in a clear and concise manner, ensuring that responses are easily understood by users.
 
-**Example 1**:
-- **Question**: "What are the main features of the Autonomous Agents blog post?"
-- **Thought**: The information is likely in the PDF documents.
-- **Action**: Call `pdf_document_retriever`
-- **Action Input**: "Autonomous Agents blog post features"
-- **Observation**: [PDF content]
-- **Final Answer**: [Answer based on PDF content]
+5. **Neutral Tone**: Maintain a neutral and informative tone, focusing on delivering factual information without personal opinions or biases.
 
-**Example 2**:
-- **Question**: "Who is the current CEO of OpenAI?"
-- **Thought**: This information is best found through an internet search.
-- **Action**: Call `internet_search`
-- **Action Input**: "Current CEO of OpenAI"
-- **Observation**: [Search results]
-- **Final Answer**: [Answer based on search results]
-
-Begin by addressing the user's query using this approach : {query}
+Use guidelines above to respond to this input from the user : {query}
 """
+
+# Function to stream responses
+from langchain_core.messages import trim_messages
+from langchain_openai import ChatOpenAI
+
+# Define the model
+model = ChatOpenAI(model="gpt-4o-mini")
 
 # Function to stream responses
 def stream_query_response(query, debug_mode=False):
@@ -150,19 +133,38 @@ def stream_query_response(query, debug_mode=False):
     # Add current query
     previous_messages.append(HumanMessage(content=query))
 
+    # Trim the messages to fit within the token limit
+    # https://python.langchain.com/docs/how_to/trim_messages
+		# input_tokens: Number of tokens in the input messages sent to the model. This should align with your `max_tokens` setting if trimming is applied correctly.
+    # output_tokens: Number of tokens in the model's response. Check out the trace in debug mode.
+		# total_tokens: Sum of `input_tokens` and `output_tokens`, representing the entire interaction's token count.
+		# completion_tokens: Similar to `output_tokens`, indicating tokens used for the model's generated response.
+
+    trimmed_messages = trim_messages(
+        previous_messages,
+        strategy="last",
+        token_counter=model,  # Use the model for token counting
+        max_tokens=100,  # Adjust this to your context window size
+        start_on="human",
+        end_on=("human", "tool"),
+        include_system=True,
+        allow_partial=False,
+    )
+
     custom_prompt = custom_prompt_template.format(query=query)
     final_response = ""
 
     try:
-        # Stream the response from the agent with full message history
+        # Stream the response from the agent with trimmed message history
         for event in agent_executor_with_memory.stream(
-            {"messages": previous_messages},
+            {"messages": trimmed_messages},  # Use trimmed messages
             config=config,
             stream_mode="values",
         ):
             if isinstance(event, (str, dict)):
                 # Extract string content if event is a dict
                 final_response = event['messages'][-1].content if isinstance(event, dict) else event
+
                 yield str(final_response)
 
                 # Conditionally show event data
