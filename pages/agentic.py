@@ -344,14 +344,23 @@ graph = workflow.compile()
 # Streamlit Chat Interface
 # Initialize session state
 import streamlit as st
+import re
 
 # Initialize session state for messages if not already present
 if "messages" not in st.session_state:
     st.session_state["messages"] = [AIMessage(content="How can I help you?")]
 
+# Sidebar configuration
+st.sidebar.title("Tool Calls")
+
+# Always display tool called and query
+st.sidebar.write("**Tool Called:**")
+tool_called_placeholder = st.sidebar.empty()
+st.sidebar.write("**Query:**")
+query_placeholder = st.sidebar.empty()
+
 # Debug mode toggle in the sidebar
-st.sidebar.title("Settings")
-debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
+debug_mode_checkbox = st.sidebar.checkbox("Show Detailed Debug Information", value=False)
 
 # Display chat messages
 for msg in st.session_state.messages:
@@ -370,6 +379,8 @@ if prompt := st.chat_input("Type your message here..."):
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
         full_response = ""
+        tool_name = "No tool called"
+        query = "No query fired to tool"
 
         for output in graph.stream(inputs):
             for key, value in output.items():
@@ -378,12 +389,22 @@ if prompt := st.chat_input("Type your message here..."):
                     message_placeholder.write(response_content)
                     full_response = response_content
 
+                    # Extract tool_calls information
+                    tool_calls_match = re.search(r"tool_calls=\[({'name':\s*'[^']*'.*?query':\s*'[^']*'})", str(value))
+                    if tool_calls_match:
+                        tool_call = tool_calls_match.group(1)
+                        tool_name = re.search(r"'name':\s*'([^']*)'", tool_call).group(1)
+                        query = re.search(r"'query':\s*'([^']*)'", tool_call).group(1)
+
+                    tool_called_placeholder.write(tool_name)
+                    query_placeholder.write(query)
+
                     # Debug Mode: Display additional information
-                    if debug_mode:
+                    if debug_mode_checkbox:
                         st.sidebar.write(f"Debug: {key} - {value}")
 
         if full_response:
             st.session_state.messages.append(AIMessage(content=full_response))
             # Debug Mode: Log the full response in sidebar
-            if debug_mode:
+            if debug_mode_checkbox:
                 st.sidebar.write(f"Debug: Full response - {full_response}")
