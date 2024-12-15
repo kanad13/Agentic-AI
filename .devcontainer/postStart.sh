@@ -5,6 +5,7 @@ python ./.devcontainer/test.py
 
 # python3 -m venv "langchain_agent_env"
 # source "langchain_agent_env"/bin/activate
+# pip3 install --pre torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cpu
 # pip install -r .devcontainer/requirements.txt
 # pip list
 # pip freeze > requirements.txt
@@ -17,9 +18,9 @@ python ./.devcontainer/test.py
 #!pip3 install -r requirements.txt
 
 # Verify the installation by importing the libraries
-import torch
-import torchvision
-import torchaudio
+#import torch
+#import torchvision
+#import torchaudio
 
 #print("PyTorch version:", torch.__version__)
 #print("Torchvision version:", torchvision.__version__)
