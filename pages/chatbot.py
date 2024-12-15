@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import uuid
 from langchain_openai import ChatOpenAI
-#https://python.langchain.com/api_reference/community/document_loaders/langchain_community.document_loaders.pdf.PyPDFDirectoryLoader.html
 from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -17,7 +16,6 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
 from langchain.schema import AIMessage, HumanMessage
-from langchain_core.messages import trim_messages
 from langchain.schema import SystemMessage
 from langchain_community.retrievers import WikipediaRetriever
 
@@ -72,8 +70,6 @@ embedding_batch_size = 512
 # The function's output will be stored in memory after the first call.
 # Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
 @st.cache_resource
-
-# Define a function to load documents from a directory
 def load_documents():
     # This function is responsible for loading PDF documents from a specified directory.
     # It uses PyPDFDirectoryLoader to handle multiple PDF files at once.
@@ -112,8 +108,6 @@ all_splits = text_splitter.split_documents(docs)
 # - The function's output will be stored in memory after the first call.
 # - Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
 @st.cache_resource
-
-# Define a function to create a vector store for efficient document retrieval
 def create_vectorstore():
     # This function sets up an embedding model and indexes the document chunks for retrieval:
     # - It uses the HuggingFaceEmbeddings class to create an embedding model.
@@ -149,7 +143,7 @@ retriever_object = vectorstore.as_retriever(search_type="similarity", search_kwa
 # This tool uses the `retriever_object` to fetch relevant document chunks.
 retriever_tool = create_retriever_tool(
     retriever_object,
-    "pdf_document_retriever",
+    "retriever_tool",
     "Retrieves and provides information from the input documents.",
 )
 
@@ -173,12 +167,13 @@ internet_search_tool = TavilySearchResults(
 #    api_wrapper=WikipediaAPIWrapper()
 #)
 
+
 # WikipediaRetriever is used for retrieving documents from Wikipedia:
 # - This tool fetches Wikipedia articles for further processing or analysis.
 wikipedia_retriever = WikipediaRetriever()
 wikipedia_retriever_tool = create_retriever_tool(
     wikipedia_retriever,
-    "wikipedia_retriever",
+    "wikipedia_retriever_tool",
     "Retrieves and provides information from Wikipedia articles.",
 )
 
@@ -190,18 +185,18 @@ tools = [retriever_tool, wikipedia_retriever_tool, internet_search_tool]
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Setup memory for conversation history
-# This line initializes a MemorySaver object, which will be used to manage and store conversation history.
+# Initialize a MemorySaver object, which will be used to manage and store conversation history.
 # MemorySaver is part of LangGraph's checkpointing system, allowing for persistence of conversation state.
 memory = MemorySaver()
 
 # Generate a unique ID for each thread to manage conversation history
-# Using UUID to create a unique identifier ensures that each conversation thread has its own distinct memory space.
-# This helps in managing multiple conversations independently.
-unique_id = str(uuid.uuid4())
-config = {"configurable": {"thread_id": unique_id}}
+# Persist the unique thread ID in `st.session_state` to maintain consistency across interactions.
+if 'unique_id' not in st.session_state:
+    st.session_state.unique_id = str(uuid.uuid4())
+config = {"configurable": {"thread_id": st.session_state.unique_id}}
 
 # Create an agent with memory capabilities
-# Here, we're creating a ReAct agent with memory capabilities:
+# Creating a ReAct agent with memory capabilities:
 # - `model` is the language model used for generating responses.
 # - `tools` are the tools defined earlier for information retrieval.
 # - `checkpointer=memory` integrates the MemorySaver into the agent, allowing it to save and load conversation history.
@@ -215,18 +210,18 @@ custom_prompt_template = PromptTemplate(
     template="""
     You are an AI assistant equipped with the following tools:
     - **retriever_tool**: This is a Retrieval Augmented Generation Tool that retrieves information from input documents.
-    - **wikipedia_search_tool**: Fetches information from Wikipedia articles based.
+    - **wikipedia_retriever_tool**: Retrieves information from Wikipedia articles.
     - **internet_search_tool**: Conducts real-time internet searches for current information using Tavily Search.
 
     When answering queries posed by the user, follow this sequence:
     1. First check for answer to user's query by invoking the retriever_tool
-    2. If no answer is found within the information retrieved by the retriever_tool, then invoke the wikipedia_search_tool and seek answer to the user's query.
-    3. If no answer is found within the information retrieved by the retriever_tool and then the wikipedia_search_tool, then invoke the internet_search_tool and seek answer to the user's query.
+    2. If no answer is found within the information retrieved by the retriever_tool, then invoke the wikipedia_retriever_tool and seek answer to the user's query.
+    3. If no answer is found within the information retrieved by the retriever_tool and then the wikipedia_retriever_tool, then invoke the internet_search_tool and seek answer to the user's query.
 
     If the retrieved information from any of these tools does not address the user's question, respond with:
     "I'm sorry, but I don't have the information to answer that question."
 
-    Avoid fabricating or speculating on information. Do not generate content beyond the retrieved data. Always cite your source for information e.g. the name of the input document that was used to retrieve the information.
+    Avoid fabricating or speculating on information. Do not generate content beyond the retrieved data. Always cite your source for information e.g., the name of the input document that was used to retrieve the information.
 
     Here is the input from the user: {query}
     """,
@@ -254,35 +249,15 @@ def stream_query_response(query, debug_mode=False):
     # The current user query is added to the message history, ensuring it's part of the context for the response.
     previous_messages.append(HumanMessage(content=query))
 
-    # Trim messages to fit within token limits
-    # This function call trims the message history to prevent exceeding token limits:
-    # - `strategy="last"` keeps the most recent messages.
-    # - `token_counter=model` uses the model to count tokens.
-    # - `max_tokens=2000` sets the maximum number of tokens allowed.
-    # - `start_on="system"` starts trimming from the system message.
-    # - `end_on=("human", "tool")` stops trimming at the last human or tool message.
-    # - `include_system=True` ensures the system message is included.
-    # - `allow_partial=False` prevents partial messages from being included.
-    trimmed_messages = trim_messages(
-        previous_messages,
-        strategy="last",
-        token_counter=model,
-        max_tokens=2000,
-        start_on="system",
-        end_on=("human", "tool"),
-        include_system=True,
-        allow_partial=False,
-    )
-
     final_response = ""
     try:
-        # Stream the response from the agent with trimmed message history
+        # Stream the response from the agent with full message history
         # This loop streams the chatbot's response in real-time:
-        # - `agent_executor_with_memory.stream` generates responses based on the trimmed messages.
+        # - `agent_executor_with_memory.stream` generates responses based on the full message history.
         # - `config=config` includes the unique thread ID for conversation management.
         # - `stream_mode="values"` specifies that we want to stream the response values.
         for event in agent_executor_with_memory.stream(
-            {"messages": trimmed_messages},
+            {"messages": previous_messages},
             config=config,
             stream_mode="values",
         ):
@@ -300,6 +275,7 @@ def stream_query_response(query, debug_mode=False):
         st.error(f"Error processing response: {str(e)}")
         yield "I encountered an error processing your request."
 
+############§§§§§§§§§§§§§§§§§§§§§############
 # Initialize session state for chat history
 # This block checks if 'chat_history' exists in the session state. If not, it initializes an empty list.
 if 'chat_history' not in st.session_state:
@@ -308,6 +284,8 @@ if 'chat_history' not in st.session_state:
 # Display chat history
 # Set the title for the Streamlit app, which will be the header for the chatbot interface.
 st.title("LangChain Chatbot with Streamlit Frontend")
+
+############§§§§§§§§§§§§§§§§§§§§§############
 
 # Debug mode toggle in the sidebar
 # This section creates a sidebar in the Streamlit app for settings:
