@@ -51,9 +51,9 @@ LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2')
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define the model for the chatbot
-#model = ChatOpenAI(model="gpt-4o-mini")
+model = ChatOpenAI(model="gpt-4o-mini")
 #model = ChatGoogleGenerativeAI(model ="gemini-2.0-flash-exp")
-model = ChatGroq(model="gemma2-9b-it")
+#model = ChatGroq(model="gemma2-9b-it")
 
 # This variable indicates whether the model supports streaming data processing.
 # Streaming can be useful for handling large datasets or real-time data processing.
@@ -248,13 +248,14 @@ def stream_query_response(query, debug_mode=False):
         previous_messages.append(HumanMessage(content=chat['user']))
         if chat['bot'] and isinstance(chat['bot'], (str, dict)):
             bot_content = chat['bot']['messages'][-1].content if isinstance(chat['bot'], dict) else chat['bot']
-            previous_messages.append(AIMessage(content=str(bot_content)))
 
     # Add current query
     # The current user query is added to the message history, ensuring it's part of the context for the response.
+            previous_messages.append(AIMessage(content=str(bot_content)))
     previous_messages.append(HumanMessage(content=query))
 
     final_response = ""
+    invoked_tools = []  # List to store details of invoked tools
     try:
         # Stream the response from the agent with full message history
         # This loop streams the chatbot's response in real-time:
@@ -262,21 +263,31 @@ def stream_query_response(query, debug_mode=False):
         # - `config=config` includes the unique thread ID for conversation management.
         # - `stream_mode="values"` specifies that we want to stream the response values.
         for event in agent_executor_with_memory.stream(
-            {"messages": previous_messages},
-            config=config,
-            stream_mode="values",
+            {"messages": previous_messages}, config=config, stream_mode="values"
         ):
-            # Update the final response with the latest event content.
             if isinstance(event, (str, dict)):
                 final_response = event['messages'][-1].content if isinstance(event, dict) else event
-            # Yield the response to allow for real-time display.
+
+                # Capture tool calls
+                if isinstance(event, dict) and 'tool_calls' in event:
+                    for tool_call in event['tool_calls']:
+                        tool_name = tool_call.get('name', 'Unknown Tool')
+                        tool_args = tool_call.get('args', {})
+                        invoked_tools.append(f"{tool_name}: {tool_args}")
+
             yield str(final_response)
-            # If debug mode is enabled, show detailed event data.
-            if debug_mode:
-                with st.expander("Show Event Data"):
-                    st.write("Event Details:", event)
+
+        # Display tools used
+        if invoked_tools:
+            with st.expander("Tools Invoked"):
+                for tool in invoked_tools:
+                    st.write(tool)
+
+        if debug_mode:
+            with st.expander("Show Event Data"):
+                st.write("Event Details:", event)
+
     except Exception as e:
-        # Handle any errors that occur during response generation.
         st.error(f"Error processing response: {str(e)}")
         yield "I encountered an error processing your request."
 
