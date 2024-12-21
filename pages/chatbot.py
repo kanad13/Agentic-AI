@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import os
 import uuid
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -40,6 +42,7 @@ st.set_page_config(
 
 # Retrieve API keys from environment variables
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 TAVILY_API_KEY = os.getenv('TAVILY_API_KEY')
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY')
@@ -48,7 +51,9 @@ LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2')
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define the model for the chatbot
-model = ChatOpenAI(model="gpt-4o-mini")
+#model = ChatOpenAI(model="gpt-4o-mini")
+#model = ChatGoogleGenerativeAI(model ="gemini-2.0-flash-exp")
+model = ChatGroq(model="gemma2-9b-it")
 
 # This variable indicates whether the model supports streaming data processing.
 # Streaming can be useful for handling large datasets or real-time data processing.
