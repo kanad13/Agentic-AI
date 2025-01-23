@@ -248,11 +248,10 @@ def stream_query_response(query, debug_mode=False):
         previous_messages.append(HumanMessage(content=chat['user']))
         if chat['bot'] and isinstance(chat['bot'], (str, dict)):
             bot_content = chat['bot']['messages'][-1].content if isinstance(chat['bot'], dict) else chat['bot']
-            # Add previous AI response
-            previous_messages.append(AIMessage(content=str(bot_content)))
 
     # Add current query
     # The current user query is added to the message history, ensuring it's part of the context for the response.
+            previous_messages.append(AIMessage(content=str(bot_content)))
     previous_messages.append(HumanMessage(content=query))
 
     final_response = ""
@@ -266,46 +265,17 @@ def stream_query_response(query, debug_mode=False):
         for event in agent_executor_with_memory.stream(
             {"messages": previous_messages}, config=config, stream_mode="values"
         ):
-            # check if the event is a dict type and has 'tool_calls' key which indicates that a tool has been invoked
-            if isinstance(event, dict) and 'tool_calls' in event:
-              for tool_call in event['tool_calls']:
-                  tool_name = tool_call.get('name', 'Unknown Tool')
-                  yield f"Invoking Tool: {tool_name}" # added tool invocation notification
-
-            # Check if the event is a string or dict, then get the content, it can be an intermediate message
-            # or final response
             if isinstance(event, (str, dict)):
-                # Get the content from the event, if it's a string, it's the final response, if dict, the last message
                 final_response = event['messages'][-1].content if isinstance(event, dict) else event
+
                 # Capture tool calls
                 if isinstance(event, dict) and 'tool_calls' in event:
                     for tool_call in event['tool_calls']:
-                      tool_name = tool_call.get('name', 'Unknown Tool')
-                      tool_args = tool_call.get('args', {})
-                      invoked_tools.append(f"{tool_name}: {tool_args}")
+                        tool_name = tool_call.get('name', 'Unknown Tool')
+                        tool_args = tool_call.get('args', {})
+                        invoked_tools.append(f"{tool_name}: {tool_args}")
 
-                # check if the event is a str type, then yield it if it's not a "tool invocation" notification
-                if isinstance(event, str) and not 'Invoking Tool:' in event:
-                    yield str(final_response)
-
-                # now check if the result is a dict type which means it can be either an AI message or a tool message
-                elif isinstance(event, dict) :
-                    #Check if the 'tool_call_id' key exists in the dictionary, it indicates that the result is a ToolMessage
-                    if 'tool_call_id' in event['messages'][-1]:
-                         tool_call_id = event['messages'][-1].get('tool_call_id')
-                         # get the response of the tool from tool_calls
-                         for item in event['tool_calls']:
-                            if item.get('id') == tool_call_id:
-                                tool_name = item.get('name')
-                                if 'content' in event['messages'][-1] and event['messages'][-1]['content']:
-                                    yield f"Tool: {tool_name} retrieved some data" # tool result confirmation
-                                    yield str(final_response)
-                                else:
-                                   yield f"Tool: {tool_name} did not return any relevant data" #tool result confirmation
-
-                    # Check if the message is an AI message without tool_call_id, then return the final AI response
-                    elif not 'tool_call_id' in event['messages'][-1]:
-                        yield str(final_response)
+            yield str(final_response)
 
         # Display tools used
         if invoked_tools:
