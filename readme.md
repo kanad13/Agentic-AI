@@ -15,15 +15,15 @@ It dynamically decides which tool to invoke - be it a retrieval system, web sear
 ## Tech Stack
 
 - **[LangChain](https://langchain.com/)**: Framework for building language model applications.
-- **FAISS**: For efficient vector search and document retrieval.
-- **HuggingFace Embeddings**: Semantic similarity for knowledge retrieval.
-- **Streamlit**: Interactive frontend for user-friendly interactions.
+- **[FAISS](https://github.com/facebookresearch/faiss)**: For efficient vector search and document retrieval.
+- **[HuggingFace Embeddings](https://huggingface.co/sentence-transformers)**: Semantic similarity for knowledge retrieval.
+- **[Streamlit](https://streamlit.io)**: Interactive frontend for user-friendly interactions.
 
 ## LangChain Tools Used
 
-1. **RAG Tool**: Retrieves information from a pre-defined knowledge base.
-2. **Search Tool**: Fetches results from the web.
-3. **Wikipedia Tool**: Pulls data from Wikipedia.
+1. **[RAG Tool](https://python.langchain.com/docs/tutorials/rag/)**: Retrieves information from a pre-defined knowledge base.
+2. **[Search Tool](https://python.langchain.com/docs/integrations/tools/tavily_search/)**: Fetches results from the web.
+3. **[Wikipedia Tool](https://python.langchain.com/docs/integrations/tools/wikipedia/)**: Pulls data from Wikipedia.
 
 ## Use Cases
 
@@ -64,7 +64,7 @@ It dynamically decides which tool to invoke - be it a retrieval system, web sear
 
 5. Open your browser to the URL provided by Streamlit.
 
-## 🔧 Configuration
+## Configuration
 
 - **Customizing Tools**: Modify the `tools` list in `app.py` to add or remove tools.
 - **Knowledge Base**: Update the FAISS index with your own documents for domain-specific applications.
