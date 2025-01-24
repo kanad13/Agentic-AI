@@ -244,7 +244,7 @@ custom_prompt_template = PromptTemplate(
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define a function to stream responses from the chatbot
-def stream_query_response(query, debug_mode=False, show_event_data=False): # Added show_event_data parameter
+def stream_query_response(query, debug_mode=False, show_event_data=False, show_tool_calls=False):
     # Initialize previous messages with the custom prompt as a system message
     previous_messages = [SystemMessage(content=custom_prompt_template.format(query=query))]
 
@@ -259,6 +259,7 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
 
     full_response = ""
     text_output = "" # Initialize text output string for debug
+    tool_calls_output = "" # Initialize string for tool calls
 
     try:
         if debug_mode:
@@ -273,7 +274,7 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
             {"messages": previous_messages}, config=config, stream_mode="values"
         ):
             if isinstance(event, (str, dict)):
-                 if isinstance(event, dict):
+                if isinstance(event, dict):
                     if event.get('messages'):
                         last_message = event['messages'][-1]
                         full_response = last_message.content
@@ -284,12 +285,19 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
                             if isinstance(last_message, AIMessage) and last_message.tool_calls:
                                 text_output += "**Tool Calls**:\n"
                                 for tool_call in last_message.tool_calls:
-                                    text_output += f"  - **Tool Name**: {tool_call['name']}\n" # Corrected line
-                                    text_output += f"    **Tool Args**: {tool_call['args']}\n" # Corrected line
-                 else:
-                      full_response = event
-                      if debug_mode:
-                          text_output += f"\n**String Event**: {event}\n" # Handling simple string events if any
+                                    text_output += f"  - **Tool Name**: {tool_call['name']}\n"
+                                    text_output += f"    **Tool Args**: {tool_call['args']}\n"
+
+                                    # Build the string for tool calls
+                                    tool_calls_output += "**Tool Calls**:\n"
+                                    for tool_call in last_message.tool_calls:
+                                        tool_calls_output += f"  - **Tool Name**: {tool_call['name']}\n"
+                                        tool_calls_output += f"    **Tool Args**: {tool_call['args']}\n"
+
+                else:
+                    full_response = event
+                    if debug_mode:
+                        text_output += f"\n**String Event**: {event}\n" # Handling simple string events if any
             elif debug_mode:
                 text_output += f"\n**Event**: {event}\n" # For other event types if needed
             yield full_response
@@ -300,8 +308,11 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
         logging.error(f"Error processing response: {e}", exc_info=True)
         yield "I encountered an error processing your request. Please try again later."
     st.session_state.chat_history[latest_index]['bot'] = full_response
-    if debug_mode: # Display the formatted text output in debug mode
-        st.session_state.debug_output = text_output # Store for display in sidebar
+    if debug_mode:
+        st.session_state.debug_output = text_output
+    if show_tool_calls:
+        st.session_state.tool_calls_output = tool_calls_output # Store tool calls for expander
+# Event Data expander is now conditionally displayed inside stream_query_response based on show_event_data checkbox
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 # Initialize session state for chat history
@@ -310,6 +321,8 @@ if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 if 'debug_output' not in st.session_state: # Initialize debug output in session state
     st.session_state.debug_output = ""
+if 'tool_calls_output' not in st.session_state: # Initialize tool calls output
+    st.session_state.tool_calls_output = ""
 
 # Display chat history
 # Set the title for the Streamlit app, which will be the header for the chatbot interface.
@@ -324,6 +337,7 @@ st.title("LangChain Chatbot with Streamlit Frontend")
 #st.sidebar.title("Settings") # Moved to the model selection above
 debug_mode = st.sidebar.checkbox("Show Debug Log", value=False) # Checkbox for Debug Log
 show_event_data = st.sidebar.checkbox("Show Event Data", value=False) # Checkbox for Event Data
+show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False) # New checkbox for tool calls
 
 # Display chat history
 # This loop iterates through the chat history stored in the session state:
@@ -361,7 +375,7 @@ if user_input := st.chat_input("You:"):
     # - `stream_query_response` is called with the user's input, debug mode, and event data settings.
     # - Each response chunk is processed as it's generated.
     full_response = ""
-    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data): # Pass show_event_data
+    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls): # Pass show_event_data and show_tool_calls
         full_response = response
         response_placeholder.markdown(response)
 
@@ -370,4 +384,7 @@ if user_input := st.chat_input("You:"):
 if debug_mode:
   if st.session_state.debug_output: # Check if there is debug output to show
     st.expander("Show Debug Log").code(st.session_state.debug_output)
-# Event Data expander is now conditionally displayed inside stream_query_response based on show_event_data checkbox
+
+if show_tool_calls:
+  if st.session_state.tool_calls_output:
+    st.expander("Show Tool Calls").code(st.session_state.tool_calls_output)
