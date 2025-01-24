@@ -83,8 +83,8 @@ embedding_batch_size = 512
 # Define a function to load documents from a directory
 
 # This decorator caches the result of the function, which means:
-# The function's output will be stored in memory after the first call.
-# Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
+# - The function's output will be stored in memory after the first call.
+# - Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
 @st.cache_resource
 def load_documents():
     # This function is responsible for loading PDF documents from a specified directory.
@@ -246,7 +246,7 @@ custom_prompt_template = PromptTemplate(
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define a function to stream responses from the chatbot
-def stream_query_response(query, debug_mode=False):
+def stream_query_response(query, debug_mode=False, show_event_data=False): # Added show_event_data parameter
     # Initialize previous messages with the custom prompt as a system message
     previous_messages = [SystemMessage(content=custom_prompt_template.format(query=query))]
 
@@ -302,7 +302,7 @@ def stream_query_response(query, debug_mode=False):
             yield full_response
 
 
-        if debug_mode:
+        if show_event_data: # Conditional display of Event Data expander
                 with st.expander("Show Event Data"): # Keep original expander for raw event
                     st.write("Event Details:", event)
 
@@ -333,7 +333,8 @@ st.title("LangChain Chatbot with Streamlit Frontend")
 # - A title for the settings section is added.
 # - A checkbox allows users to toggle debug mode on or off, which can be useful for development or troubleshooting.
 #st.sidebar.title("Settings") # Moved to the model selection above
-debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
+debug_mode = st.sidebar.checkbox("Show Debug Log", value=False) # Checkbox for Debug Log
+show_event_data = st.sidebar.checkbox("Show Event Data", value=False) # Checkbox for Event Data
 
 # Display chat history
 # This loop iterates through the chat history stored in the session state:
@@ -371,13 +372,12 @@ if user_input := st.chat_input("You:"):
     # - `stream_query_response` is called with the user's input and debug mode setting.
     # - Each response chunk is processed as it's generated.
     full_response = ""
-    for response in stream_query_response(user_input, debug_mode=debug_mode):
+    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data): # Pass show_event_data
         full_response = response
         response_placeholder.markdown(response)
 
 # Display debug output in main window if debug_mode is enabled
 if debug_mode:
-    st.expander("Show Debug Log").code(st.session_state.debug_output) # Display in main window instead of sidebar
-# Remove the sidebar debug display
-# if debug_mode:
-#     st.sidebar.expander("Show Debug Details").code(st.session_state.debug_output)
+    st.expander("Show Debug Log").code(st.session_state.debug_output) # Display Debug Log based on checkbox
+
+# Event Data expander is now conditionally displayed inside stream_query_response based on show_event_data checkbox
