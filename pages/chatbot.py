@@ -12,7 +12,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.tools.tavily_search import TavilySearchResults
-# from langchain_community.tools import WikipediaQueryRun # Removed
+# from langchain_community.tools import WikipediaQueryRun  # Removed: Replaced by WikipediaRetriever tool
 from langchain_community.utilities import WikipediaAPIWrapper
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.ERROR)
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Configure Streamlit page settings
-config = {
+streamlit_page_config = {
     'scrollZoom': True,
     'displayModeBar': True,
     'displaylogo': False
@@ -66,123 +66,74 @@ elif selected_model == "gemma2-9b-it":
     model = ChatGroq(model="gemma2-9b-it", api_key=GROQ_API_KEY)
 
 
-# This variable indicates whether the model supports streaming data processing.
-# Streaming can be useful for handling large datasets or real-time data processing.
-does_model_support_streaming = True
-# Set an environment variable to control the behavior of tokenizers.
-# This setting allows tokenizers to work in parallel, potentially speeding up text processing tasks.
+# Enable parallel tokenization for potential speed improvement.
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
-# Define the batch size for embedding operations.
-# This setting determines how many items are processed at once when creating embeddings, which can affect both memory usage and processing speed.
+# Batch size for embedding operations (adjust based on memory and speed).
 embedding_batch_size = 512
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define a function to load documents from a directory
-
-# This decorator caches the result of the function, which means:
-# - The function's output will be stored in memory after the first call.
-# - Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
+# Cache loaded documents to avoid reloading on each run.
 @st.cache_resource
 def load_documents():
-    # This function is responsible for loading PDF documents from a specified directory.
-    # It uses PyPDFDirectoryLoader to handle multiple PDF files at once.
-     # The path "./input_files/" is where the PDF files are expected to be located.
+    # Loads PDF documents from the "./input_files/" directory.
     loader = PyPDFDirectoryLoader(path="./input_files/")
-
-    # The `load()` method of the loader is called to actually load the documents into memory.
-    # This step prepares the documents for further processing or analysis.
     return loader.load()
 
-# Call the `load_documents()` function and store the result in the `docs` variable.
-# This variable will now contain all the documents loaded from the directory,
-# ready for use in subsequent parts of the script or notebook.
-docs = load_documents()
+loaded_documents = load_documents()
 
 # Split the loaded documents into smaller chunks for processing
-# Create an instance of RecursiveCharacterTextSplitter to split documents into smaller chunks.
-# This class is used to divide large documents into manageable pieces for processing:
-# - `chunk_size`: Specifies the maximum number of characters in each chunk (1000 in this case).
-# - `chunk_overlap`: Allows for some overlap between chunks to maintain context (200 characters).
-# - `add_start_index`: Adds the starting index of each chunk in the original document for reference.
+# Initialize text splitter to chunk documents for processing (chunk_size=1000, chunk_overlap=200).
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
     chunk_overlap=200,
     add_start_index=True
 )
 
-# Use the `split_documents` method of the text_splitter to process all documents in `docs`.
-# This method will:
-# - Split each document into chunks based on the specified parameters.
-# - Return a list of these chunks, which can then be used for further processing or analysis.
-all_splits = text_splitter.split_documents(docs)
+document_chunks = text_splitter.split_documents(loaded_documents)
 
 # Create a vector store for efficient document retrieval
-# This decorator caches the result of the function, which means:
-# - The function's output will be stored in memory after the first call.
-# - Subsequent calls will retrieve the cached result instead of re-executing the function, which can significantly speed up repeated operations.
+# Cache vector store to avoid re-creation on each run.
 @st.cache_resource
 def create_vectorstore():
-    # This function sets up an embedding model and indexes the document chunks for retrieval:
-    # - It uses the HuggingFaceEmbeddings class to create an embedding model.
-    # - The model chosen here is 'sentence-transformers/all-mpnet-base-v2', known for its performance in sentence embeddings.
-    # - The `encode_kwargs` parameter sets the batch size for embedding, which was defined earlier as `embedding_batch_size`.
-    embedding_wrapper = HuggingFaceEmbeddings(
+    # Creates and caches a vector store from document chunks.
+    # Uses 'sentence-transformers/all-mpnet-base-v2' for embeddings.
+    embedding_model = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-mpnet-base-v2",
         encode_kwargs={'batch_size': embedding_batch_size}
     )
-    # Use FAISS (Facebook AI Similarity Search) to create an index from the document chunks:
-    # - FAISS is an efficient similarity search and clustering library.
-    # - It takes the document chunks (`all_splits`) and the embedding model to create an index.
-    # - This index allows for fast retrieval of similar documents or chunks based on their embeddings.
-    return FAISS.from_documents(documents=all_splits, embedding=embedding_wrapper)
+    return FAISS.from_documents(documents=document_chunks, embedding=embedding_model)
 
-# Call the `create_vectorstore()` function and store the result in the `vectorstore` variable.
-# This variable now contains an index of all document chunks, ready for similarity search or retrieval operations.
 vectorstore = create_vectorstore()
 
 # Create a retriever object from the vector store
-# This object will be used to retrieve documents based on similarity search:
-# - `search_type="similarity"` specifies that we want to find documents similar to a given query.
-# - `search_kwargs={"k": 6}` means we want to retrieve the top 6 most similar documents.
-retriever_object = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
+# Create retriever to fetch top 6 similar document chunks.
+document_retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define tools for the chatbot to use
-# These tools provide different functionalities for information retrieval:
+# These tools provide different functionalities for information retrieval.
 
-# Create a tool for retrieving information from the input documents:
-# This tool uses the `retriever_object` to fetch relevant document chunks.
+# Create a tool for retrieving information from the input documents.
 retriever_tool = create_retriever_tool(
-    retriever_object,
+    document_retriever,
     "retriever_tool",
     "Retrieves and provides information from the input documents.",
 )
 
-# Set up an internet search tool:
-# - `max_results=2` limits the number of search results to 2.
-# - `search_depth="advanced"` specifies a more thorough search.
-# - `include_answer=True` includes a direct answer if available.
-# - `include_raw_content=True` includes the raw content of the search results.
-# - `include_images=True` allows for image results to be included.
+# Set up an internet search tool.
 internet_search_tool = TavilySearchResults(
-    max_results=2,
-    search_depth="advanced",
-    include_answer=True,
-    include_raw_content=True,
-    include_images=True,
+    max_results=2, # Limit internet search results to 2.
+    search_depth="advanced", # Specify a more thorough search.
+    include_answer=True, # Include a direct answer if available.
+    include_raw_content=True, # Include the raw content of the search results.
+    include_images=True, # Allow for image results to be included.
 )
 
-# WikipediaRetriever is designed for retrieving documents to be used in downstream tasks within a pipeline, while WikipediaQueryRun is intended for direct querying of Wikipedia, often within agent-based frameworks.
 
-#wikipedia_search_tool = WikipediaQueryRun(
-#    api_wrapper=WikipediaAPIWrapper()
-#)
-
-# WikipediaRetriever is used for retrieving documents from Wikipedia:
-# - This tool fetches Wikipedia articles for further processing or analysis.
 wikipedia_retriever = WikipediaRetriever()
 wikipedia_retriever_tool = create_retriever_tool(
     wikipedia_retriever,
@@ -190,35 +141,27 @@ wikipedia_retriever_tool = create_retriever_tool(
     "Retrieves and provides information from Wikipedia articles.",
 )
 
-# List of tools available to the chatbot:
-# This list contains the tools that the chatbot can use to answer queries.
+# List of tools available to the chatbot.
 tools = [retriever_tool, wikipedia_retriever_tool, internet_search_tool]
-#tools = [retriever_tool, wikipedia_search_tool, internet_search_tool]
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Setup memory for conversation history
-# Initialize a MemorySaver object, which will be used to manage and store conversation history.
-# MemorySaver is part of LangGraph's checkpointing system, allowing for persistence of conversation state.
+# Initialize MemorySaver for conversation history persistence.
 memory = MemorySaver()
 
 # Generate a unique ID for each thread to manage conversation history
 # Persist the unique thread ID in `st.session_state` to maintain consistency across interactions.
 if 'unique_id' not in st.session_state:
     st.session_state.unique_id = str(uuid.uuid4())
-config = {"configurable": {"thread_id": st.session_state.unique_id}}
+agent_config = {"configurable": {"thread_id": st.session_state.unique_id}}
 
 # Create an agent with memory capabilities
-# Creating a ReAct agent with memory capabilities:
-# - `model` is the language model used for generating responses.
-# - `tools` are the tools defined earlier for information retrieval.
-# - `checkpointer=memory` integrates the MemorySaver into the agent, allowing it to save and load conversation history.
-agent_executor_with_memory = create_react_agent(model, tools, checkpointer=memory)
+# Create ReAct agent with memory using specified model, tools, and memory saver.
+agent_with_memory = create_react_agent(model, tools, checkpointer=memory)
 
 # Define a custom prompt template for the chatbot
-# This custom prompt template will guide the chatbot's behavior:
-# - It provides instructions on how to respond to user queries.
-# - It includes placeholders for dynamic content like the user's question or previous conversation history.
+# This custom prompt template will guide the chatbot's behavior.
 custom_prompt_template = PromptTemplate(
     template="""
     You are an AI assistant equipped with the following tools:
@@ -258,8 +201,8 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
     previous_messages.append(HumanMessage(content=query))
 
     full_response = ""
-    text_output = "" # Initialize text output string for debug
-    tool_calls_output = "" # Initialize string for tool calls
+    text_output = ""
+    tool_calls_output = ""
 
     try:
         if debug_mode:
@@ -270,8 +213,8 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
                 text_output += f"- {msg}\n"
             text_output += "\nAgent Stream Output:\n"
         # Stream the response from the agent with full message history
-        for event in agent_executor_with_memory.stream(
-            {"messages": previous_messages}, config=config, stream_mode="values"
+        for event in agent_with_memory.stream(
+            {"messages": previous_messages}, config=agent_config, stream_mode="values"
         ):
             if isinstance(event, (str, dict)):
                 if isinstance(event, dict):
@@ -288,7 +231,6 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
                                     text_output += f"  - **Tool Name**: {tool_call['name']}\n"
                                     text_output += f"    **Tool Args**: {tool_call['args']}\n"
 
-                                    # Build the string for tool calls
                                     tool_calls_output += "**Tool Calls**:\n"
                                     for tool_call in last_message.tool_calls:
                                         tool_calls_output += f"  - **Tool Name**: {tool_call['name']}\n"
@@ -297,12 +239,12 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
                 else:
                     full_response = event
                     if debug_mode:
-                        text_output += f"\n**String Event**: {event}\n" # Handling simple string events if any
+                        text_output += f"\n**String Event**: {event}\n"
             elif debug_mode:
-                text_output += f"\n**Event**: {event}\n" # For other event types if needed
+                text_output += f"\n**Event**: {event}\n"
             yield full_response
-        if show_event_data: # Conditional display of Event Data expander
-            with st.expander("Show Event Data"): # Keep original expander for raw event
+        if show_event_data:
+            with st.expander("Show Event Data"):
                 st.write("Event Details:", event)
     except Exception as e:
         logging.error(f"Error processing response: {e}", exc_info=True)
@@ -311,38 +253,31 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
     if debug_mode:
         st.session_state.debug_output = text_output
     if show_tool_calls:
-        st.session_state.tool_calls_output = tool_calls_output # Store tool calls for expander
+        st.session_state.tool_calls_output = tool_calls_output
 # Event Data expander is now conditionally displayed inside stream_query_response based on show_event_data checkbox
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 # Initialize session state for chat history
-# This block checks if 'chat_history' exists in the session state. If not, it initializes an empty list.
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
-if 'debug_output' not in st.session_state: # Initialize debug output in session state
+if 'debug_output' not in st.session_state:
     st.session_state.debug_output = ""
-if 'tool_calls_output' not in st.session_state: # Initialize tool calls output
+if 'tool_calls_output' not in st.session_state:
     st.session_state.tool_calls_output = ""
 
 # Display chat history
-# Set the title for the Streamlit app, which will be the header for the chatbot interface.
+# Set the title for the Streamlit app.
 st.title("LangChain Chatbot with Streamlit Frontend")
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Debug mode toggle in the sidebar
-# This section creates a sidebar in the Streamlit app for settings:
-# - A title for the settings section is added.
-# - A checkbox allows users to toggle debug mode on or off, which can be useful for development or troubleshooting.
-#st.sidebar.title("Settings") # Moved to the model selection above
-debug_mode = st.sidebar.checkbox("Show Debug Log", value=False) # Checkbox for Debug Log
-show_event_data = st.sidebar.checkbox("Show Event Data", value=False) # Checkbox for Event Data
-show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False) # New checkbox for tool calls
+# Sidebar checkboxes for debug and event/tool call details.
+debug_mode = st.sidebar.checkbox("Show Debug Log", value=False)
+show_event_data = st.sidebar.checkbox("Show Event Data", value=False)
+show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False)
 
-# Display chat history
-# This loop iterates through the chat history stored in the session state:
-# - For each chat entry, it displays the user's message in a 'user' chat message container.
-# - If there's a bot response, it displays that in an 'assistant' chat message container.
+# Display chat history from session state.
 for chat in st.session_state.chat_history:
     with st.chat_message("user"):
         st.write(chat['user'])
@@ -351,38 +286,29 @@ for chat in st.session_state.chat_history:
             st.write(chat['bot'])
 
 # User input
-# This block handles user input through Streamlit's chat input widget:
-# - `st.chat_input` creates an input field for the user to type their message.
-# - The `:=` operator assigns the input to `user_input` if it's not empty.
+# Handle user input via Streamlit chat input.
 if user_input := st.chat_input("You:"):
     # Add user message to chat history
-    # Append the user's input to the chat history, initializing the bot's response as an empty string.
     st.session_state.chat_history.append({"user": user_input, "bot": ""})
     latest_index = len(st.session_state.chat_history) - 1
 
     # Display the user's input
-    # Show the user's message in a 'user' chat message container for visual feedback.
     with st.chat_message("user"):
         st.write(user_input)
 
     # Placeholder for bot response
-    # Create a placeholder for the bot's response, which will be updated in real-time.
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
 
-    # Stream the response
-    # This loop streams the chatbot's response:
-    # - `stream_query_response` is called with the user's input, debug mode, and event data settings.
-    # - Each response chunk is processed as it's generated.
+    # Stream chatbot response and update placeholder.
     full_response = ""
-    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls): # Pass show_event_data and show_tool_calls
+    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls):
         full_response = response
         response_placeholder.markdown(response)
 
-# Display debug output in main window if debug_mode is enabled
-# Display Debug Log after the chatbot response and when debug mode is enabled
+# Conditionally display debug and tool call output expanders.
 if debug_mode:
-  if st.session_state.debug_output: # Check if there is debug output to show
+  if st.session_state.debug_output:
     st.expander("Show Debug Log").code(st.session_state.debug_output)
 
 if show_tool_calls:
