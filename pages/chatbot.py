@@ -12,7 +12,6 @@ from langchain_huggingface import HuggingFaceEmbeddings  # Hugging Face embeddin
 from langchain_community.vectorstores import FAISS  # FAISS vector store for efficient similarity search
 from langchain.tools.retriever import create_retriever_tool  # For creating tools from retrievers
 from langchain_community.tools.tavily_search import TavilySearchResults  # Tavily Search tool for internet searches
-from langchain_community.utilities import WikipediaAPIWrapper # For interacting with Wikipedia API
 from langgraph.checkpoint.memory import MemorySaver  # For saving and restoring agent states in memory
 from langgraph.prebuilt import create_react_agent  # For creating ReAct agents in Langchain
 from langchain_core.prompts import PromptTemplate  # For creating prompt templates
@@ -29,9 +28,6 @@ logging.basicConfig(level=logging.ERROR) # Configure basic logging to capture er
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Streamlit Page Configuration
-streamlit_page_config = {
-    'scrollZoom': True, # Enable scroll zoom for figures
-}
 st.set_page_config(
     page_title="ChatBot", # Title of the Streamlit app in the browser tab
     page_icon=":chat-plus-outline:", # Icon for the Streamlit app in the browser tab
@@ -46,8 +42,8 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY') # API key for Groq models
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') # API key for Google models
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY') # API key for OpenAI models
 TAVILY_API_KEY = os.getenv('TAVILY_API_KEY') # API key for Tavily Search
-LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY') # API key for Langchain (potentially for tracing or other Langchain services)
-LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2') # Flag to enable Langchain tracing v2
+LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY') # API key for Langchain Observability/Tracing features
+LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2') # Flag to enable Langchain Tracing V2 for debugging and monitoring
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
@@ -69,7 +65,7 @@ elif selected_model == "gemma2-9b-it":
 
 # Configure Tokenizers Parallelism and Embedding Batch Size
 os.environ["TOKENIZERS_PARALLELISM"] = "true" # Enable parallel tokenization for potentially faster processing
-embedding_batch_size = 512 # Set batch size for embedding operations; adjust based on available memory
+embedding_batch_size = 512 # Set batch size for embedding operations; adjust based on available memory and GPU (if applicable). Larger batch size can be faster but requires more memory.
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
@@ -158,18 +154,23 @@ agent_with_memory = create_react_agent(model, tools, checkpointer=memory) # Crea
 custom_prompt_template = PromptTemplate(
     template="""
     You are an AI assistant equipped with the following tools:
+
+    ### Tool Descriptions: ###
     - **retriever_tool**: This is a Retrieval Augmented Generation Tool that retrieves information from input documents.
     - **wikipedia_retriever_tool**: Retrieves information from Wikipedia articles.
     - **internet_search_tool**: Conducts real-time internet searches for current information using Tavily Search.
 
+    ### Instructions for Tool Usage: ###
     When answering queries posed by the user, follow this sequence of steps to ensure comprehensive and accurate responses:
     1. **Document Retrieval**: First, check for an answer to the user's query by invoking the `retriever_tool`. This tool searches the provided input documents for relevant information.
     2. **Wikipedia Search**: If no answer is found within the information retrieved by the `retriever_tool`, then invoke the `wikipedia_retriever_tool` to seek an answer from Wikipedia articles.
     3. **Internet Search**: If no answer is found in either the input documents or Wikipedia, then invoke the `internet_search_tool` to conduct a broader internet search for the answer.
 
+    ### Fallback Response: ###
     If, after checking all these sources, the retrieved information still does not address the user's question, respond with:
     "I'm sorry, but I don't have the information to answer that question."
 
+    ### Important Constraints: ###
     It is crucial to avoid fabricating or speculating on information. Do not generate content beyond the retrieved data. Always cite your source for information when possible, e.g., mention the name of the input document that was used to retrieve the information or indicate if the information is from Wikipedia or the internet search.
 
     Here is the input from the user: {query}
@@ -223,7 +224,7 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
         ):
             if isinstance(event, (str, dict)): # Handle string and dictionary events from the stream
                 if isinstance(event, dict): # Process dictionary events (typically containing structured messages)
-                    if event.get('messages'): # Check if the event contains a 'messages' key
+                    if event.get('messages'): # Check if the event is a message event (LangGraph agent may emit other types of events)
                         last_message = event['messages'][-1] # Get the latest message from the event
                         full_response = last_message.content # Extract the content of the last message
 
@@ -232,13 +233,12 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
                             text_output += f"**Content**: {last_message.content}\n" # Log message content
                             if isinstance(last_message, AIMessage) and last_message.tool_calls: # Check if it's an AI message and has tool calls
                                 text_output += "**Tool Calls**:\n"
-                                tool_calls_output += "**Tool Calls**:\n" # Initialize tool_calls_output here
-                                for tool_call in last_message.tool_calls: # Iterate through tool calls
-                                    text_output += f"  - **Tool Name**: {tool_call['name']}\n" # Log tool name
-                                    text_output += f"    **Tool Args**: {tool_call['args']}\n" # Log tool arguments
-                                    tool_calls_output += f"  - **Tool Name**: {tool_call['name']}\n" # Accumulate tool_calls_output here
-                                    tool_calls_output += f"    **Tool Args**: {tool_call['args']}\n" # Accumulate tool_calls_output here
-
+                                tool_calls_output += "**Tool Calls**:\n"
+                                for tool_call in last_message.tool_calls:
+                                    tool_call_debug_str = f"  - **Tool Name**: {tool_call['name']}\n"
+                                    tool_call_debug_str += f"    **Tool Args**: {tool_call['args']}\n"
+                                    text_output += tool_call_debug_str
+                                    tool_calls_output += tool_call_debug_str
                 else: # Handle string events (raw text responses)
                     full_response = event # Assign the string event as the full response
                     if debug_mode:
@@ -325,6 +325,6 @@ if debug_mode: # Conditionally display debug output
 if show_event_data: # Conditionally display event data expander
   if st.session_state.event_data: # Check if there is event data to display
     with st.expander("Raw Agent Communication Data (Technical)"):
-        st.write("This expander displays the raw, technical data stream from the chatbot agent. This is advanced debugging information showing the step-by-step communication within the agent as it processes your request. It's primarily useful for developers or those deeply interested in the technical workings.")
+        st.write("This section displays the raw, technical data stream from the chatbot agent. This is advanced debugging information showing the step-by-step communication within the agent as it processes your request. It's primarily useful for developers or those deeply interested in the technical workings.")
         st.write("Event Details:", st.session_state.event_data) # Display stored event data from session state
         # Note: Currently showing the *last* event received in the stream. Consider if you want to display all events or a summary.
