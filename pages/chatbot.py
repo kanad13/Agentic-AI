@@ -375,6 +375,9 @@ if user_input := st.chat_input("You:"):
         full_response = response
         response_placeholder.markdown(response)
 
-# Display debug output in sidebar if debug_mode is enabled
+# Display debug output in main window if debug_mode is enabled
 if debug_mode:
-    st.sidebar.expander("Show Debug Details").code(st.session_state.debug_output)
+    st.expander("Show Debug Log").code(st.session_state.debug_output) # Display in main window instead of sidebar
+# Remove the sidebar debug display
+# if debug_mode:
+#     st.sidebar.expander("Show Debug Details").code(st.session_state.debug_output)
