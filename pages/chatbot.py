@@ -246,17 +246,17 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
             elif debug_mode:
                 text_output += f"\n**Event**: {event}\n" # Log other event types if in debug mode
             yield full_response # Yield the partial response to the Streamlit app
-        if show_event_data: # Conditionally display event data expander
-            with st.expander("Show Event Data"):
-                st.write("Event Details:", event) # Display raw event data
+        st.session_state.chat_history[latest_index]['bot'] = full_response # Update chat history with the full bot response
+        if debug_mode:
+            st.session_state.debug_output = text_output # Store debug output in session state
+        if show_tool_calls:
+            st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state
+        if show_event_data: # Store the last event data in session state after the loop
+            st.session_state.event_data = event # Store the last 'event'
     except Exception as e: # Error handling for response processing
         logging.error(f"Error processing response: {e}", exc_info=True) # Log the error
         yield "I encountered an error processing your request. Please try again later." # Yield an error message to the user
-    st.session_state.chat_history[latest_index]['bot'] = full_response # Update chat history with the full bot response
-    if debug_mode:
-        st.session_state.debug_output = text_output # Store debug output in session state
-    if show_tool_calls:
-        st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state
+    # ... (rest of stream_query_response) ...
 
 
 ############§§§§§§§§§§§§§§§§§§§§§############
@@ -267,6 +267,8 @@ if 'debug_output' not in st.session_state:
     st.session_state.debug_output = "" # Initialize debug output string
 if 'tool_calls_output' not in st.session_state:
     st.session_state.tool_calls_output = "" # Initialize tool calls output string
+if 'event_data' not in st.session_state: # Initialize event_data
+    st.session_state.event_data = None # Initialize event_data to None or ""
 
 # Streamlit App Title
 st.title("LangChain Chatbot with Streamlit Frontend") # Set the title of the Streamlit application
@@ -274,9 +276,10 @@ st.title("LangChain Chatbot with Streamlit Frontend") # Set the title of the Str
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Sidebar Checkboxes for Debug and Display Options
+show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False) # Checkbox to show tool call details
 debug_mode = st.sidebar.checkbox("Show Debug Log", value=False) # Checkbox to enable debug log display
 show_event_data = st.sidebar.checkbox("Show Event Data", value=False) # Checkbox to show raw event data
-show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False) # Checkbox to show tool call details
+
 
 # Display Chat History from Session State
 for chat in st.session_state.chat_history: # Iterate through chat history
@@ -307,10 +310,21 @@ if user_input := st.chat_input("You:"): # Get user input from the chat input box
         response_placeholder.markdown(response) # Update the placeholder with the streamed response
 
 # Conditional Display of Debug and Tool Call Output Expanders
-if debug_mode: # Conditionally display debug output
-  if st.session_state.debug_output: # Check if there is debug output to display
-    st.expander("Show Debug Log").code(st.session_state.debug_output) # Display debug output in an expander
-
 if show_tool_calls: # Conditionally display tool calls output
   if st.session_state.tool_calls_output: # Check if there is tool calls output to display
-    st.expander("Show Tool Calls").code(st.session_state.tool_calls_output) # Display tool calls output in an expander
+    with st.expander("Tool Interaction Details"):
+        st.write("This section reveals the tools the chatbot used to respond to your query. It shows which tools were activated and what instructions were given to them. This can help you understand how the chatbot is working behind the scenes to find information.")
+        st.code(st.session_state.tool_calls_output) # Display tool calls output in an expander
+
+if debug_mode: # Conditionally display debug output
+  if st.session_state.debug_output: # Check if there is debug output to display
+    with st.expander("Detailed Debugging Information"):
+        st.write("This section provides a detailed technical log of the chatbot's thought process. It's useful for understanding exactly what steps the chatbot took to answer your question, including the messages sent back and forth internally. This level of detail is generally for debugging and advanced understanding.")
+        st.code(st.session_state.debug_output) # Display debug output in an expander
+
+if show_event_data: # Conditionally display event data expander
+  if st.session_state.event_data: # Check if there is event data to display
+    with st.expander("Raw Agent Communication Data (Technical)"):
+        st.write("This expander displays the raw, technical data stream from the chatbot agent. This is advanced debugging information showing the step-by-step communication within the agent as it processes your request. It's primarily useful for developers or those deeply interested in the technical workings.")
+        st.write("Event Details:", st.session_state.event_data) # Display stored event data from session state
+        # Note: Currently showing the *last* event received in the stream. Consider if you want to display all events or a summary.
