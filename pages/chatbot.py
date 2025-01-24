@@ -6,23 +6,26 @@ import uuid
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
-from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
+from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.tools import WikipediaQueryRun
+# from langchain_community.tools import WikipediaQueryRun # Removed
 from langchain_community.utilities import WikipediaAPIWrapper
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 from langchain_core.prompts import PromptTemplate
-from langchain.schema import AIMessage, HumanMessage
-from langchain.schema import SystemMessage
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from langchain_community.retrievers import WikipediaRetriever
+import logging
+import json
+
 
 # Load environment variables from a .env file
 load_dotenv()
+logging.basicConfig(level=logging.ERROR)
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
@@ -51,9 +54,17 @@ LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2')
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # Define the model for the chatbot
-model = ChatOpenAI(model="gpt-4o-mini")
-#model = ChatGoogleGenerativeAI(model ="gemini-2.0-flash-exp")
-#model = ChatGroq(model="gemma2-9b-it")
+# Model Selection in Streamlit
+st.sidebar.title("Settings")
+selected_model = st.sidebar.selectbox("Select Model", options=["gpt-4o-mini", "gemini-2.0-flash-exp", "gemma2-9b-it"])
+
+if selected_model == "gpt-4o-mini":
+    model = ChatOpenAI(model="gpt-4o-mini")
+elif selected_model == "gemini-2.0-flash-exp":
+    model = ChatGoogleGenerativeAI(model ="gemini-2.0-flash-exp", google_api_key=GOOGLE_API_KEY)
+elif selected_model == "gemma2-9b-it":
+    model = ChatGroq(model="gemma2-9b-it", api_key=GROQ_API_KEY)
+
 
 # This variable indicates whether the model supports streaming data processing.
 # Streaming can be useful for handling large datasets or real-time data processing.
@@ -172,7 +183,6 @@ internet_search_tool = TavilySearchResults(
 #    api_wrapper=WikipediaAPIWrapper()
 #)
 
-
 # WikipediaRetriever is used for retrieving documents from Wikipedia:
 # - This tool fetches Wikipedia articles for further processing or analysis.
 wikipedia_retriever = WikipediaRetriever()
@@ -238,58 +248,41 @@ custom_prompt_template = PromptTemplate(
 # Define a function to stream responses from the chatbot
 def stream_query_response(query, debug_mode=False):
     # Initialize previous messages with the custom prompt as a system message
-    # This sets up the initial context for the chatbot, including the user's query.
     previous_messages = [SystemMessage(content=custom_prompt_template.format(query=query))]
 
     # Append the chat history
-    # This loop adds all previous interactions from the session state to the message history.
-    # It ensures that the chatbot has context from past conversations.
     for chat in st.session_state.chat_history:
         previous_messages.append(HumanMessage(content=chat['user']))
-        if chat['bot'] and isinstance(chat['bot'], (str, dict)):
-            bot_content = chat['bot']['messages'][-1].content if isinstance(chat['bot'], dict) else chat['bot']
+        if chat['bot']:
+            previous_messages.append(AIMessage(content=chat['bot']))
 
     # Add current query
-    # The current user query is added to the message history, ensuring it's part of the context for the response.
-            previous_messages.append(AIMessage(content=str(bot_content)))
     previous_messages.append(HumanMessage(content=query))
 
-    final_response = ""
-    invoked_tools = []  # List to store details of invoked tools
+    full_response = ""
     try:
         # Stream the response from the agent with full message history
-        # This loop streams the chatbot's response in real-time:
-        # - `agent_executor_with_memory.stream` generates responses based on the full message history.
-        # - `config=config` includes the unique thread ID for conversation management.
-        # - `stream_mode="values"` specifies that we want to stream the response values.
         for event in agent_executor_with_memory.stream(
             {"messages": previous_messages}, config=config, stream_mode="values"
         ):
             if isinstance(event, (str, dict)):
-                final_response = event['messages'][-1].content if isinstance(event, dict) else event
+                 if isinstance(event, dict):
+                    if event.get('messages'):
+                        full_response = event['messages'][-1].content
+                 else:
+                      full_response = event
 
-                # Capture tool calls
-                if isinstance(event, dict) and 'tool_calls' in event:
-                    for tool_call in event['tool_calls']:
-                        tool_name = tool_call.get('name', 'Unknown Tool')
-                        tool_args = tool_call.get('args', {})
-                        invoked_tools.append(f"{tool_name}: {tool_args}")
-
-            yield str(final_response)
-
-        # Display tools used
-        if invoked_tools:
-            with st.expander("Tools Invoked"):
-                for tool in invoked_tools:
-                    st.write(tool)
+            yield full_response
 
         if debug_mode:
-            with st.expander("Show Event Data"):
-                st.write("Event Details:", event)
+                with st.expander("Show Event Data"):
+                    st.write("Event Details:", event)
 
     except Exception as e:
-        st.error(f"Error processing response: {str(e)}")
-        yield "I encountered an error processing your request."
+        logging.error(f"Error processing response: {e}", exc_info=True)
+        yield "I encountered an error processing your request. Please try again later."
+
+    st.session_state.chat_history[latest_index]['bot'] = full_response
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 # Initialize session state for chat history
@@ -307,7 +300,7 @@ st.title("LangChain Chatbot with Streamlit Frontend")
 # This section creates a sidebar in the Streamlit app for settings:
 # - A title for the settings section is added.
 # - A checkbox allows users to toggle debug mode on or off, which can be useful for development or troubleshooting.
-st.sidebar.title("Settings")
+#st.sidebar.title("Settings") # Moved to the model selection above
 debug_mode = st.sidebar.checkbox("Show Debug Details", value=False)
 
 # Display chat history
@@ -345,8 +338,7 @@ if user_input := st.chat_input("You:"):
     # This loop streams the chatbot's response:
     # - `stream_query_response` is called with the user's input and debug mode setting.
     # - Each response chunk is processed as it's generated.
+    full_response = ""
     for response in stream_query_response(user_input, debug_mode=debug_mode):
-        # Update the chat history with the latest response from the bot.
-        st.session_state.chat_history[latest_index]['bot'] = response
-        # Update the placeholder with the latest response, allowing for real-time display.
+        full_response = response
         response_placeholder.markdown(response)
