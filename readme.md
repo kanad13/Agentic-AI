@@ -79,3 +79,34 @@ It dynamically decides which tool to invoke - be it a retrieval system, web sear
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
+
+## graphs
+
+```mermaid
+graph LR
+    A[User Query] --> B(Chatbot Agent);
+    B --> C{Tool Invocation?};
+    C -- Yes --> D[Tool Execution];
+    D --> E(Tool Result);
+    E --> F(Chatbot Agent);
+    C -- No --> F;
+    F --> G[User Answer];
+```
+
+```mermaid
+graph LR
+    A[User Query] --> B(Chatbot Agent);
+    B --> C{Query Type?};
+    C -- Type 1 (e.g., Document Info) --> D1[Document Retriever Tool];
+    C -- Type 2 (e.g., General Knowledge) --> D2[Wikipedia Tool];
+    C -- Type 3 (e.g., Weather) --> D3[Internet Search Tool];
+    C -- No Tool Needed --> E[Answer Directly];
+    D1 --> F(Tool Result 1);
+    D2 --> G(Tool Result 2);
+    D3 --> H(Tool Result 3);
+    F --> I(Chatbot Agent - Answer Generation);
+    G --> I;
+    H --> I;
+    E --> I;
+    I --> J[User Answer];
+```
