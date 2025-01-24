@@ -69,7 +69,6 @@ elif selected_model == "gemma2-9b-it":
 # This variable indicates whether the model supports streaming data processing.
 # Streaming can be useful for handling large datasets or real-time data processing.
 does_model_support_streaming = True
-
 # Set an environment variable to control the behavior of tokenizers.
 # This setting allows tokenizers to work in parallel, potentially speeding up text processing tasks.
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -89,7 +88,7 @@ embedding_batch_size = 512
 def load_documents():
     # This function is responsible for loading PDF documents from a specified directory.
     # It uses PyPDFDirectoryLoader to handle multiple PDF files at once.
-    # The path "./input_files/" is where the PDF files are expected to be located.
+     # The path "./input_files/" is where the PDF files are expected to be located.
     loader = PyPDFDirectoryLoader(path="./input_files/")
 
     # The `load()` method of the loader is called to actually load the documents into memory.
@@ -133,7 +132,6 @@ def create_vectorstore():
         model_name="sentence-transformers/all-mpnet-base-v2",
         encode_kwargs={'batch_size': embedding_batch_size}
     )
-
     # Use FAISS (Facebook AI Similarity Search) to create an index from the document chunks:
     # - FAISS is an efficient similarity search and clustering library.
     # - It takes the document chunks (`all_splits`) and the embedding model to create an index.
@@ -270,7 +268,6 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
             for msg in previous_messages:
                 text_output += f"- {msg}\n"
             text_output += "\nAgent Stream Output:\n"
-
         # Stream the response from the agent with full message history
         for event in agent_executor_with_memory.stream(
             {"messages": previous_messages}, config=config, stream_mode="values"
@@ -289,27 +286,19 @@ def stream_query_response(query, debug_mode=False, show_event_data=False): # Add
                                 for tool_call in last_message.tool_calls:
                                     text_output += f"  - **Tool Name**: {tool_call['name']}\n" # Corrected line
                                     text_output += f"    **Tool Args**: {tool_call['args']}\n" # Corrected line
-
-
                  else:
                       full_response = event
                       if debug_mode:
                           text_output += f"\n**String Event**: {event}\n" # Handling simple string events if any
-
             elif debug_mode:
                 text_output += f"\n**Event**: {event}\n" # For other event types if needed
-
             yield full_response
-
-
         if show_event_data: # Conditional display of Event Data expander
-                with st.expander("Show Event Data"): # Keep original expander for raw event
-                    st.write("Event Details:", event)
-
+            with st.expander("Show Event Data"): # Keep original expander for raw event
+                st.write("Event Details:", event)
     except Exception as e:
         logging.error(f"Error processing response: {e}", exc_info=True)
         yield "I encountered an error processing your request. Please try again later."
-
     st.session_state.chat_history[latest_index]['bot'] = full_response
     if debug_mode: # Display the formatted text output in debug mode
         st.session_state.debug_output = text_output # Store for display in sidebar
@@ -369,7 +358,7 @@ if user_input := st.chat_input("You:"):
 
     # Stream the response
     # This loop streams the chatbot's response:
-    # - `stream_query_response` is called with the user's input and debug mode setting.
+    # - `stream_query_response` is called with the user's input, debug mode, and event data settings.
     # - Each response chunk is processed as it's generated.
     full_response = ""
     for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data): # Pass show_event_data
@@ -377,7 +366,8 @@ if user_input := st.chat_input("You:"):
         response_placeholder.markdown(response)
 
 # Display debug output in main window if debug_mode is enabled
+# Display Debug Log after the chatbot response and when debug mode is enabled
 if debug_mode:
-    st.expander("Show Debug Log").code(st.session_state.debug_output) # Display Debug Log based on checkbox
-
+  if st.session_state.debug_output: # Check if there is debug output to show
+    st.expander("Show Debug Log").code(st.session_state.debug_output)
 # Event Data expander is now conditionally displayed inside stream_query_response based on show_event_data checkbox
