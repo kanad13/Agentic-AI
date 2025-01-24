@@ -232,14 +232,12 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
                             text_output += f"**Content**: {last_message.content}\n" # Log message content
                             if isinstance(last_message, AIMessage) and last_message.tool_calls: # Check if it's an AI message and has tool calls
                                 text_output += "**Tool Calls**:\n"
+                                tool_calls_output += "**Tool Calls**:\n" # Initialize tool_calls_output here
                                 for tool_call in last_message.tool_calls: # Iterate through tool calls
                                     text_output += f"  - **Tool Name**: {tool_call['name']}\n" # Log tool name
                                     text_output += f"    **Tool Args**: {tool_call['args']}\n" # Log tool arguments
-
-                                    tool_calls_output += "**Tool Calls**:\n" # Prepare tool calls output for display
-                                    for tool_call in last_message.tool_calls:
-                                        tool_calls_output += f"  - **Tool Name**: {tool_call['name']}\n"
-                                        tool_calls_output += f"    **Tool Args**: {tool_call['args']}\n"
+                                    tool_calls_output += f"  - **Tool Name**: {tool_call['name']}\n" # Accumulate tool_calls_output here
+                                    tool_calls_output += f"    **Tool Args**: {tool_call['args']}\n" # Accumulate tool_calls_output here
 
                 else: # Handle string events (raw text responses)
                     full_response = event # Assign the string event as the full response
