@@ -183,7 +183,7 @@ document_retriever = vectorstore.as_retriever(
 retriever_tool = create_retriever_tool(
     document_retriever, # The retriever object created earlier, responsible for fetching document chunks.
     "retriever_tool", # Name of the tool, used by the agent to invoke it. This name is referenced in the agent's prompt.
-    "Retrieves and provides information from the input documents." # Description of the tool, used by the agent to understand its purpose and when to use it.
+    "Retrieves information from the input documents." # Description of the tool, used by the agent to understand its purpose and when to use it.
 )
 # `retriever_tool` enables the agent to access and use the document retriever to find information within the loaded documents.
 
@@ -209,7 +209,7 @@ wikipedia_retriever = WikipediaRetriever() # Initialize Wikipedia retriever usin
 wikipedia_retriever_tool = create_retriever_tool(
     wikipedia_retriever, # The Wikipedia retriever object.
     "wikipedia_retriever_tool", # Name of the Wikipedia retrieval tool.
-    "Retrieves and provides information from Wikipedia articles." # Description of the tool.
+    "Retrieves information from Wikipedia articles." # Description of the tool.
 )
 # `wikipedia_retriever_tool` provides the agent with access to information from Wikipedia using Langchain's WikipediaRetriever.
 
@@ -256,7 +256,7 @@ custom_prompt_template = PromptTemplate(
     You are an AI assistant equipped with the following tools:
 
     ### Tool Descriptions: ###
-    - **retriever_tool**: This is a Retrieval Augmented Generation Tool that retrieves information from input documents.
+    - **retriever_tool**: This is a Retrieval Augmented Generation tool that retrieves information from input documents.
     - **wikipedia_retriever_tool**: Retrieves information from Wikipedia articles.
     - **internet_search_tool**: Conducts real-time internet searches for current information using Tavily Search.
 
@@ -357,7 +357,7 @@ def create_github_issue(title, body, tool_calls_comment=None, debug_log_comment=
 def stream_query_response(query, debug_mode=False, show_event_data=False, show_tool_calls=False):
     """
     Streams responses from the chatbot agent based on the user query to provide a more interactive user experience.
-    Also creates a GitHub issue with the question and answer, including debug/tool call information as comments if enabled.
+    Optionally creates a GitHub issue with the question and answer, including debug/tool call information as comments if enabled.
 
     Args:
         query (str): The user's input query that needs to be processed by the chatbot.
@@ -443,9 +443,9 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
         # Partial responses are yielded to update the UI in real-time.
 
         # --- GitHub Issue Creation ---
-        tool_calls_comment_text = f"**Show Tool Calls:**\n```\n{st.session_state.tool_calls_output}\n```" if show_tool_calls and st.session_state.tool_calls_output else None # Format tool calls output for comment.
-        debug_log_comment_text = f"**Show Debug Log:**\n```\n{st.session_state.debug_output}\n```" if debug_mode and st.session_state.debug_output else None # Format debug log output for comment.
-        event_data_comment_text = f"**Show Event Data:**\n```\n{st.session_state.event_data}\n```" if show_event_data and st.session_state.event_data else None # Format event data for comment.
+        tool_calls_comment_text = f"**Tool Calls:**\n```\n{tool_calls_output}\n```" if show_tool_calls else None # Format tool calls output for comment.
+        debug_log_comment_text = f"**Debug Log:**\n```\n{text_output}\n```" if debug_mode else None # Format debug log output for comment.
+        event_data_comment_text = f"**Event Data:**\n```\n{st.session_state.event_data}\n```" if show_event_data and st.session_state.event_data else None # Format event data for comment.
 
         issue_created = create_github_issue(
             title=query,  # User's question as issue title.
@@ -511,9 +511,8 @@ if 'event_data' not in st.session_state: # Initialize event_data
     # 'event_data' stores raw event data from the agent stream, primarily for advanced debugging and technical analysis.
     # `event_data` stores raw communication events from the agent, intended for detailed debugging.
 
-# --- Streamlit App Title ---
-# st.title("Understand AI Agents") # Set the title of the Streamlit application
-st.write("Need some text on what this page shows") # Placeholder for app description, consider replacing with a relevant description.
+# --- Streamlit App Description ---
+st.write("This page demonstrates a chatbot powered by AI agents. You can interact with different language models and observe how the agent utilizes tools to answer your questions. Enable 'Show Tool Calls' and 'Show Debug Log' in the sidebar to understand the agent's internal workings.")
 # `st.write` with "Need some text on what this page shows" is a placeholder and should be replaced with a descriptive text about the app.
 
 ############§§§§§§§§§§§§§§§§§§§§§############
