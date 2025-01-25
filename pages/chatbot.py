@@ -340,10 +340,12 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
         # --- Post-Stream Processing ---
         # After the stream finishes, update the chat history with the full bot response.
         st.session_state.chat_history[latest_index]['bot'] = full_response # Update chat history with the full bot response. Store the complete response in the chat history.
+        if show_tool_calls:
+            print(f"Before setting session state - tool_calls_output is: {tool_calls_output}") # Debugging print
+            st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state for display in the UI.
+            print(f"After setting session state - st.session_state.tool_calls_output is: {st.session_state.tool_calls_output}") # Debugging print
         if debug_mode:
             st.session_state.debug_output = text_output # Store debug output in session state for display in the UI.
-        if show_tool_calls:
-            st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state for display in the UI.
         if show_event_data: # Store the last event data in session state after the loop for potential raw data inspection.
             st.session_state.event_data = event # Store the last 'event' for displaying raw event data in the UI.
             # Note: Currently only storing the *last* event. Consider storing all events if needed for more detailed analysis.
@@ -380,6 +382,18 @@ if 'event_data' not in st.session_state: # Initialize event_data
 # --- Streamlit App Title ---
 st.title("LangChain Chatbot with Streamlit Frontend") # Set the title of the Streamlit application
 
+# --- NEW SECTION: Sample Questions Expander MOVED TO MAIN WINDOW ---
+with st.expander("Sample Questions", expanded=True): # Moved from sidebar to main window
+
+    sample_questions = [
+        "What are the main causes of climate change?",
+        "Explain the theory of relativity in simple terms.",
+        "What are the benefits of meditation and mindfulness?"
+    ]
+
+    for i, question in enumerate(sample_questions):
+        st.code(f"{question}") # Display question with markdown, each as a separate element
+
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # --- Sidebar Checkboxes and Help Section ---
@@ -393,17 +407,6 @@ with st.sidebar.expander("Help & Display Options",  expanded=True):
     show_event_data = st.checkbox("Show Event Data", value=False) # Checkbox to show raw event data
     st.caption("Show raw communication data from the chatbot agent (technical).") # Description for "Show Event Data"
 
-# --- NEW SECTION: Sample Questions Expander ---
-with st.sidebar.expander("Sample Questions", expanded=True): # Added expander for sample questions, initially collapsed
-
-    sample_questions = [
-        "What are the main causes of climate change?",
-        "Explain the theory of relativity in simple terms.",
-        "What are the benefits of meditation and mindfulness?"
-    ]
-
-    for i, question in enumerate(sample_questions):
-        st.code(f"{question}") # Display question with markdown, each as a separate element
 
 # --- Display Chat History from Session State ---
 for chat in st.session_state.chat_history: # Iterate through chat history
