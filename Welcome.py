@@ -1,14 +1,20 @@
 import streamlit as st
 
 config = {'scrollZoom': True, 'displayModeBar': True, 'displaylogo': False}
-st.set_page_config(page_title="LangChain-MultiTool-Agent", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
+st.set_page_config(page_title="Agentic-AI Chatbot", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
 
 st.write("""
-#### LangChain-MultiTool-Agent
+#### Agentic-AI Chatbot Demo: Tool Calling in Action
 
-An intelligent chatbot built with LangChain that dynamically selects the appropriate tool to answer user queries.
+This is a chatbot that can answer your questions using information from documents, Wikipedia, and the internet. It's designed to be a helpful tool for finding information quickly.
 
-It leverages the power of LangChain agents, retrieval-augmented generation (RAG), web search, and Wikipedia queries for context-aware, real-time responses.
+**Click the chatbot page sidebar to access the chatbot.**
+
+**How to Use the Chatbot:**
+
+1.  **Ask a Question:** Type your question in the text box at the bottom of the chatbot window.
+2.  **Press Enter or Click Send:** The chatbot will process your question and provide an answer.
+3.  **Read the Answer:** The chatbot's response will appear in the chat window.
 
 #### More details
 

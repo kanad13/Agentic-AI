@@ -1,98 +1,107 @@
-# Agentic-AI Chatbot Demo: Tool Calling in Action
+# Agentic AI Chatbot Demo: A Smart Assistant That Uses Tools
 
-**Tagline:** See a chatbot that thinks and uses tools, just like a helpful assistant! (Code included!)
+**Tagline:** See a chatbot that thinks and uses tools to help you find answers! (Code included)
 
-This repository contains the code for an advanced AI chatbot that uses LangChain agents and tools to provide intelligent, context-aware responses.
-
-It dynamically decides which tool to invoke - be it a retrieval system, web search, or Wikipedia query - depending on the user's question. This ensures precise and relevant answers every time.
+This project demonstrates an AI chatbot that goes beyond simple question answering. It acts like a smart assistant by using different "tools" to find the best information for your questions.
 
 **TRY THE CHATBOT LIVE DEMO HERE**
 
-## Chatbot Features
+## What This Chatbot Can Do
 
-- **Dynamic Tool Selection**: The agent intelligently decides which tool to use based on the query.
-- **Retrieval-Augmented Generation (RAG)**: Answer user's questions based on documents given to it.
-- **Web Search Integration**: Searches the internet in real-time for up-to-date answers.
-- **Wikipedia Integration**: Queries Wikipedia for factual and detailed information.
-- **Persistent Memory**: Maintains session context to provide continuity across conversations.
+- **Understands Your Questions:** The chatbot analyzes what you're asking.
+- **Chooses the Right Tool:** It intelligently selects from different tools to find the answer. These tools include:
+  - **Your Documents:** If you upload documents, it can search within them.
+  - **Wikipedia:** For general knowledge and facts.
+  - **Internet Search:** For up-to-date information on the web.
+- **Gives You Relevant Answers:** It combines information from ALL these tools to provide helpful and accurate responses.
+- **Remembers the Conversation:** It keeps track of your conversation, so you don't have to repeat yourself.
 
-## How It Works
+## How It Works - Like a Smart Detective
 
-1. **Query Input**: The user submits a query through the Streamlit frontend.
-2. **Agent Decision**: The LangChain agent determines the most relevant tool to handle the query.
-3. **Tool Execution**: The selected tool fetches the required data.
-4. **Response Generation**: The agent combines tool output with reasoning to generate the final response.
+Imagine you ask the chatbot a question. Here's what happens behind the scenes:
+
+1.  **You Ask:** You type your question into the chat.
+2.  **The Chatbot Thinks:** It analyzes your question to figure out what kind of information it needs.
+3.  **Tool Selection:** Based on your question, it chooses the best tool to use:
+    - **Example:** If you ask "What's the weather in Berlin?", it will use the **Internet Search Tool** to get current weather information.
+    - **Example:** If you ask "Explain model collapse?", it might first use the **Document Tool** to check any documents you've provided. If not found, it might use the **Wikipedia Tool** for a general explanation.
+    - **Example:** If you ask "Who would win, Laptop Man or Superman?", it could use both the **Wikipedia Tool** and **Internet Search Tool** to find information about each character.
+4.  **Tool in Action:** The chosen tool searches for the information.
+5.  **Getting the Answer:** The chatbot takes the information from the tool and crafts a clear answer for you.
 
 ```mermaid
 graph LR
     A[Your Question] --> B(Chatbot);
-    B <--> C{Tools:<br> - Documents<br> - Wikipedia<br> - Internet};
-    C --> B;
-    B --> D[Answer];
+    B --> C{Choose Tool:<br> - Documents?<br> - Wikipedia?<br> - Internet?};
+    C --> D[Use Selected Tool];
+    D --> E[Get Information];
+    E --> F[Give You Answer];
 ```
 
-## Use Cases
+## Agent Actions: Beyond Just Answering Questions
 
-- Quick fact-checking and research.
-- Summarizing complex topics.
-- Answering domain-specific questions with retrieval capabilities.
+This chatbot also demonstrates a key feature of "Agentic AI": **taking actions**. While it answers your questions, it can also perform simple tasks.
 
-## What makes this chatbot special?
+**Example Action: Reporting to GitHub**
 
-It uses agentic approach ...
+To show this "action" capability, the chatbot does something a real assistant might do: it can create a report on GitHub. You can see some of the questions and answers that the chatbot has answered here - `link to github repo issues tab`
 
-## What is Agentic AI?
+**Think of it this way:** Creating a GitHub issue is a simplified example of how an AI assistant could perform other actions for you, like:
 
-**Think of it like a Smart Assistant!**
+- Sending an email.
+- Updating a document.
+- Booking a flight (in a more complex system).
 
-Imagine you have a really smart assistant who can do more than just follow simple instructions. That's Agentic AI!
+It's about the AI being able to _do_ things, not just talk.
 
-It's about making AI that can:
+## What is "Agentic AI"?
 
-- **Understand** what's going on around it (like reading information or seeing things).
-- **Make Plans** to achieve a goal (like figuring out steps to solve a problem).
-- **Take Action** on its own (like using tools or making decisions).
-- **Learn** and get better over time.
+"Agentic AI" is about making AI more like a helpful assistant that can think and act for itself, not just follow simple commands.
 
-Instead of just reacting to your every command, an Agentic AI can think for itself and take initiative to help you.
+Key ideas of Agentic AI:
 
-Here's a simple way to think about how Agentic AI works:
+- **Understanding:** The AI can understand information from its surroundings (like text, web pages, etc.).
+- **Planning:** It can make plans to achieve a goal, like answering your question or performing a task.
+- **Acting:** It can take actions on its own using "tools" to get things done.
+- **Learning:** It can learn and improve over time.
+
+Instead of just reacting to your every instruction, an Agentic AI can take initiative to help you in a more proactive and intelligent way.
 
 ```mermaid
 graph LR
-    A[See & Understand - PERCEIVE] --> B[Make a Plan - PLAN];
-    B --> C[Do Something - ACT];
-    C --> D[Get Better - LEARN];
+    A[Understand Information] --> B[Make a Plan];
+    B --> C[Take Action - Use Tools];
+    C --> D[Learn & Improve];
     D --> A;
 ```
 
 ## What is "Tool Calling"?
 
-**Tool Calling - Giving AI the Right Resources.**
+To be truly helpful, a smart assistant needs the right tools.
 
-To be really helpful, even a smart assistant needs tools. Think of it like giving a student access to books, the internet, and a calculator to help them answer questions. For AI, "tools" are things like:
+"Tool Calling" is giving the AI chatbot access to resources it can use to find information or perform actions.
 
-- **Search Engines:** To find info on the web.
-- **Databases:** To look up facts.
-- **Special Programs:** To do specific jobs, like checking the weather.
+Think of it like giving a student access to:
 
-**"Tool Calling"** is simply the AI's ability to:
+- **Books and Documents:** To find specific information in texts.
+- **Wikipedia:** To look up general knowledge.
+- **Internet Search:** To find the latest information online.
 
-1.  Realize it needs extra help (a "tool").
-2.  Pick the best tool for the job.
-3.  Use the tool to get information or take action.
-4.  Use the tool's results to solve your problem.
+"Tool Calling" means the AI can:
 
-It's how we give AI the resources it needs to be truly useful and go beyond what it already "knows."
+1.  **Realize it needs help:** It understands when it needs to look something up.
+2.  **Choose the best tool:** It picks the right tool for the job (like searching the internet for weather).
+3.  **Use the tool:** It uses the tool to get the information it needs.
+4.  **Give you a better answer:** It uses the tool's results to answer your question more accurately and thoroughly.
 
-Here's a simple diagram of how Tool Calling works:
+It's how we make AI more resourceful and capable of going beyond its built-in knowledge.
 
 ```mermaid
 graph LR
-    A[AI Needs Info to Answer] --> B[Choose a Tool like Search or Docs];
-    B --> C[Use the Tool to Get Info];
+    A[Chatbot Needs Info] --> B[Choose a Tool e.g., Search];
+    B --> C[Use the Tool];
     C --> D[Get Information from Tool];
-    D --> E[Use Info to Answer Questions];
+    D --> E[Use Info to Answer You];
 ```
 
 ## How this Chatbot implements Agentic AI and Tool Calling
@@ -132,8 +141,6 @@ graph LR
 
 - **It Has "Tools":** The code gives the chatbot three tools: a Document Tool, a Wikipedia Tool, and an Internet Tool.
 - **It Uses Tools Smartly:** The chatbot figures out which tool (or tools) will be most helpful to answer your question.
-
-Here's a simple picture of how the chatbot uses tools:
 
 ## Tech Stack
 
