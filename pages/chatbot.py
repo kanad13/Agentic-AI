@@ -340,12 +340,10 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
         # --- Post-Stream Processing ---
         # After the stream finishes, update the chat history with the full bot response.
         st.session_state.chat_history[latest_index]['bot'] = full_response # Update chat history with the full bot response. Store the complete response in the chat history.
-        if show_tool_calls:
-            print(f"Before setting session state - tool_calls_output is: {tool_calls_output}") # Debugging print
-            st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state for display in the UI.
-            print(f"After setting session state - st.session_state.tool_calls_output is: {st.session_state.tool_calls_output}") # Debugging print
         if debug_mode:
             st.session_state.debug_output = text_output # Store debug output in session state for display in the UI.
+        if show_tool_calls:
+            st.session_state.tool_calls_output = tool_calls_output # Store tool calls output in session state for display in the UI.
         if show_event_data: # Store the last event data in session state after the loop for potential raw data inspection.
             st.session_state.event_data = event # Store the last 'event' for displaying raw event data in the UI.
             # Note: Currently only storing the *last* event. Consider storing all events if needed for more detailed analysis.
@@ -353,6 +351,7 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
     except Exception as e: # --- Error Handling ---
         logging.error(f"Error processing response: {e}", exc_info=True) # Log the error using the logging module, including traceback.
         yield "I encountered an error processing your request. Please try again later." # Yield an error message to the user in case of exceptions.
+        # This provides a user-friendly error message instead of crashing the application.
     # ... (rest of stream_query_response) ...
 
 ############§§§§§§§§§§§§§§§§§§§§§############
@@ -382,18 +381,6 @@ if 'event_data' not in st.session_state: # Initialize event_data
 # --- Streamlit App Title ---
 st.title("LangChain Chatbot with Streamlit Frontend") # Set the title of the Streamlit application
 
-# --- NEW SECTION: Sample Questions Expander MOVED TO MAIN WINDOW ---
-with st.expander("Sample Questions", expanded=True): # Moved from sidebar to main window
-
-    sample_questions = [
-        "What are the main causes of climate change?",
-        "Explain the theory of relativity in simple terms.",
-        "What are the benefits of meditation and mindfulness?"
-    ]
-
-    for i, question in enumerate(sample_questions):
-        st.code(f"{question}") # Display question with markdown, each as a separate element
-
 ############§§§§§§§§§§§§§§§§§§§§§############
 
 # --- Sidebar Checkboxes and Help Section ---
@@ -417,23 +404,62 @@ for chat in st.session_state.chat_history: # Iterate through chat history
             st.write(chat['bot']) # Write bot message
 
 # --- User Input Handling ---
-if user_input := st.chat_input("You:"): # Get user input from the chat input box
+if user_input := st.chat_input("You:"):
     # Append user message to chat history
-    st.session_state.chat_history.append({"user": user_input, "bot": ""}) # Add user message and empty bot response to chat history
-    latest_index = len(st.session_state.chat_history) - 1 # Get the index of the latest message
+    st.session_state.chat_history.append({"user": user_input, "bot": ""})
+    latest_index = len(st.session_state.chat_history) - 1
 
     # Display User Message in Chat
-    with st.chat_message("user"): # Display user message in chat format
-        st.write(user_input) # Write user message
+    with st.chat_message("user"):
+        st.write(user_input)
 
     # Placeholder for Bot Response
-    with st.chat_message("assistant"): # Create a chat message container for the assistant
-        response_placeholder = st.empty() # Create an empty placeholder within the assistant chat message
-        full_response = ""  # Initialize an empty full response
-        with st.spinner("Thinking..."): # Display a spinner while waiting for the response
-          for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls): # Stream chatbot responses
-            full_response = response  # Accumulate full response
-            response_placeholder.markdown(full_response) # Update the placeholder with the accumulated response
+    with st.chat_message("assistant"):
+        response_placeholder = st.empty()
+        full_response = ""
+        with st.spinner("Thinking..."):
+          for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls):
+            full_response = response
+            response_placeholder.markdown(full_response)
+else: # Add this 'else' block to handle the case when there's no user input from chat_input
+    st.write("Try these sample questions:") # Optional: Add a line to guide users
+
+    col1, col2, col3 = st.columns(3) # Create 3 columns for buttons
+
+    with col1:
+        if st.button("Summarize the documents", key="sample_1"): # Unique key for each button
+            user_input = "Summarize the documents"
+
+    with col2:
+        if st.button("Latest news on AI?", key="sample_2"): # Unique key for each button
+            user_input = "What is the latest news on AI?"
+
+    with col3:
+        if st.button("Explain quantum computing", key="sample_3"): # Unique key for each button
+            user_input = "Explain quantum computing"
+
+    if 'user_input' not in locals(): # If no sample question button was clicked, initialize user_input to None.
+        user_input = None # Ensure user_input is None if no button is pressed and no chat input is given.
+
+
+    if user_input: # Now the rest of your input processing logic will only run if there's a user_input (either from chat or sample button)
+        # Append user message to chat history
+        st.session_state.chat_history.append({"user": user_input, "bot": ""})
+        latest_index = len(st.session_state.chat_history) - 1
+
+        # Display User Message in Chat
+        with st.chat_message("user"):
+            st.write(user_input)
+
+        # Placeholder for Bot Response
+        with st.chat_message("assistant"):
+            response_placeholder = st.empty()
+            full_response = ""
+            with st.spinner("Thinking..."):
+              for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls):
+                full_response = response
+                response_placeholder.markdown(full_response)
+
 
 # --- Conditional Display of Debug and Tool Call Output Expanders ---
 if show_tool_calls: # Conditionally display tool calls output
