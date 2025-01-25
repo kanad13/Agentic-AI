@@ -4,6 +4,7 @@ import os  # Provides functions for interacting with the operating system
 import uuid  # Module for generating universally unique identifiers
 import logging # Module for logging events and errors for debugging and monitoring
 from dotenv import load_dotenv  # Function to load environment variables from a .env file
+import requests # Library for making HTTP requests
 
 # --- Langchain Framework ---
 from langchain_openai import ChatOpenAI  # OpenAI's chat model integration within Langchain
@@ -53,7 +54,7 @@ st.set_page_config(
 # These keys are essential for authenticating with various AI models and services.
 # Ensure these API keys are correctly set in your .env file.
 # Refer to the respective provider's documentation for obtaining these keys.
-# API keys are loaded using `os.getenv()` and are necessary for accessing services like OpenAI, Google Gemini, Groq, and Tavily Search.
+# API keys are loaded using `os.getenv()` and are necessary for accessing services like OpenAI, Google Gemini, Groq, Tavily Search, and GitHub.
 
 GROQ_API_KEY = os.getenv('GROQ_API_KEY') # API key for Groq models. Required for accessing Groq's language models.
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') # API key for Google models. Required for accessing Google's Gemini language models.
@@ -61,6 +62,7 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY') # API key for OpenAI models. Requir
 TAVILY_API_KEY = os.getenv('TAVILY_API_KEY') # API key for Tavily Search. Required for using the Tavily internet search tool.
 LANGCHAIN_API_KEY = os.getenv('LANGCHAIN_API_KEY') # API key for Langchain Observability/Tracing features. Enables advanced debugging and monitoring of Langchain applications.
 LANGCHAIN_TRACING_V2 = os.getenv('LANGCHAIN_TRACING_V2') # Flag to enable Langchain Tracing V2 for more detailed observability. Set to 'true' to activate. Useful for debugging and performance analysis.
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN_kanad1323') # API token for GitHub issue creation. Required for creating issues in the specified GitHub repository.
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
@@ -282,10 +284,80 @@ custom_prompt_template = PromptTemplate(
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
+# --- GitHub Issue Creation Function ---
+def create_github_issue(title, body, tool_calls_comment=None, debug_log_comment=None, event_data_comment=None):
+    """
+    Creates a GitHub issue in the specified repository with the given title and body.
+    Optionally adds comments for tool calls, debug logs, and event data.
+
+    Args:
+        title (str): The title of the GitHub issue (user's question).
+        body (str): The body of the GitHub issue (chatbot's answer).
+        tool_calls_comment (str, optional): Comment text for tool calls. Defaults to None.
+        debug_log_comment (str, optional): Comment text for debug log. Defaults to None.
+        event_data_comment (str, optional): Comment text for event data. Defaults to None.
+
+    Returns:
+        bool: True if issue creation and comment addition were successful, False otherwise.
+    """
+    repo_owner = "kanad1323"  # Your GitHub username/organization. Replace with your actual username or organization.
+    repo_name = "test-repo"   # Your repository name. Replace with your actual repository name.
+    github_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues" # GitHub API endpoint for creating issues.
+    headers = {
+        'Authorization': f'token {GITHUB_TOKEN}', # Include GitHub token for authentication.
+        'Accept': 'application/vnd.github.v3+json' # Specify API version and response format.
+    }
+    issue_data = {
+        'title': title, # Issue title is set to the user's query.
+        'body': body # Issue body is set to the chatbot's response.
+    }
+
+    try:
+        response = requests.post(github_api_url, headers=headers, json=issue_data) # Send POST request to create the issue.
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx). This will handle API errors.
+        issue_json = response.json() # Parse the JSON response from GitHub API.
+        issue_number = issue_json.get('number') # Extract the issue number from the JSON response.
+
+        if issue_number:
+            logging.info(f"GitHub issue created successfully: {issue_json.get('html_url')}") # Log successful issue creation with URL.
+
+            comments_to_add = {
+                "Show Tool Calls": tool_calls_comment, # Comment for tool call details, if available.
+                "Show Debug Log": debug_log_comment, # Comment for debug log, if available.
+                "Show Event Data": event_data_comment, # Comment for event data, if available.
+            }
+
+            for comment_title, comment_text in comments_to_add.items(): # Iterate through comments to add.
+                if comment_text: # Only add comment if text is not None.
+                    comment_api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/issues/{issue_number}/comments" # API endpoint for issue comments.
+                    comment_data = {'body': comment_text} # Comment body is set to the provided comment text.
+                    comment_response = requests.post(comment_api_url, headers=headers, json=comment_data) # Send POST request to add comment.
+                    if not comment_response.ok: # Check if comment creation was successful.
+                        logging.error(f"Error adding comment '{comment_title}' to GitHub issue: {comment_response.status_code} - {comment_response.text}") # Log comment creation error.
+                    else:
+                        logging.info(f"Comment '{comment_title}' added to GitHub issue.") # Log successful comment creation.
+            return True # Issue and comments created successfully.
+
+        else:
+            logging.error(f"Could not retrieve issue number from GitHub API response.") # Log error if issue number is not found.
+            return False # Issue creation likely failed, but no issue number to add comments.
+
+    except requests.exceptions.RequestException as e: # Catch exceptions related to HTTP requests.
+        logging.error(f"Error creating GitHub issue: {e}") # Log request exceptions during issue creation.
+        return False # Issue creation failed due to request exception.
+
+    except Exception as e: # Catch any other unexpected exceptions.
+        logging.error(f"An unexpected error occurred during GitHub issue creation: {e}") # Log unexpected errors during issue creation.
+        return False # Unexpected error.
+
+
+############§§§§§§§§§§§§§§§§§§§§§############
+
 # --- Function to Stream Chatbot Responses ---
 def stream_query_response(query, debug_mode=False, show_event_data=False, show_tool_calls=False):
     """
     Streams responses from the chatbot agent based on the user query to provide a more interactive user experience.
+    Also creates a GitHub issue with the question and answer, including debug/tool call information as comments if enabled.
 
     Args:
         query (str): The user's input query that needs to be processed by the chatbot.
@@ -369,6 +441,25 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
         # The loop iterates through events, handling different event types (string, dictionary) and extracting the response content.
         # Debug and tool call information are captured if respective flags are enabled.
         # Partial responses are yielded to update the UI in real-time.
+
+        # --- GitHub Issue Creation ---
+        tool_calls_comment_text = f"**Show Tool Calls:**\n```\n{st.session_state.tool_calls_output}\n```" if show_tool_calls and st.session_state.tool_calls_output else None # Format tool calls output for comment.
+        debug_log_comment_text = f"**Show Debug Log:**\n```\n{st.session_state.debug_output}\n```" if debug_mode and st.session_state.debug_output else None # Format debug log output for comment.
+        event_data_comment_text = f"**Show Event Data:**\n```\n{st.session_state.event_data}\n```" if show_event_data and st.session_state.event_data else None # Format event data for comment.
+
+        issue_created = create_github_issue(
+            title=query,  # User's question as issue title.
+            body=full_response, # Bot's answer as issue body.
+            tool_calls_comment=tool_calls_comment_text, # Tool calls information as comment.
+            debug_log_comment=debug_log_comment_text, # Debug log information as comment.
+            event_data_comment=event_data_comment_text # Event data as comment.
+        ) # Call the function to create GitHub issue with collected information.
+
+        if issue_created:
+            logging.info("GitHub issue creation process completed.") # Log successful GitHub issue creation.
+        else:
+            logging.error("GitHub issue creation process failed.") # Log failure of GitHub issue creation.
+
 
         # --- Post-Stream Processing ---
         # After the stream finishes, update the chat history with the full bot response.
