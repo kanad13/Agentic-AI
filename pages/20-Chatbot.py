@@ -57,15 +57,15 @@ GITHUB_TOKEN = os.getenv('GITHUB_TOKEN_kanad1323') # GitHub API token for issue 
 st.sidebar.title("Settings") # Sidebar title
 selected_model = st.sidebar.selectbox(
     "Select Model",
-    options=["gpt-4o-mini", "gemini-2.0-flash-exp", "gemma2-9b-it"] # Model options: OpenAI, Google, Groq.
+    options=["OpenAI GPT-4o", "Meta Llama-3.1", "Google Gemma-2"] # Model options: OpenAI, Google, Groq.
 )
 
 # Initialize Chat Model based on user selection
-if selected_model == "gpt-4o-mini":
+if selected_model == "OpenAI GPT-4o":
     model = ChatOpenAI(model="gpt-4o-mini", openai_api_key=OPENAI_API_KEY) # Use OpenAI GPT-4o model.
-elif selected_model == "gemini-2.0-flash-exp":
-    model = ChatGoogleGenerativeAI(model ="gemini-2.0-flash-exp", google_api_key=GOOGLE_API_KEY) # Use Google Gemini model.
-elif selected_model == "gemma2-9b-it":
+elif selected_model == "Meta Llama-3.1":
+    model = ChatGroq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY) # Use Groq Gemma model.
+elif selected_model == "Google Gemma-2":
     model = ChatGroq(model="gemma2-9b-it", api_key=GROQ_API_KEY) # Use Groq Gemma model.
 
 # --- Performance Tuning ---

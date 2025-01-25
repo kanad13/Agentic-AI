@@ -24,7 +24,7 @@ Click the pages from the sidebar to learn more about Agentic AI, understand how 
 st.write("""
 #### More details
 
-Check out the code of the chatbot [on Github.](https://github.com/kanad13/Agentic-AI-Chatbot)
+[Check out the code of the chatbot on Github.](https://github.com/kanad13/Agentic-AI-Chatbot)
 
 Checkout my website for other AI/ML projects - [Kunal-Pathak.com](https://www.kunal-pathak.com).
 				 """)
