@@ -2,7 +2,7 @@
 
 This project demonstrates an AI chatbot that goes beyond simple question answering. It acts like a smart assistant by using different "tools" to find the best information for your questions.
 
-**[TRY THE CHATBOT LIVE DEMO HERE](https://agentic-ai.streamlit.app/Contact_Me)**
+**[TRY THE CHATBOT LIVE DEMO HERE](https://agentic-ai.streamlit.app)**
 
 ## What This Chatbot Can Do
 
