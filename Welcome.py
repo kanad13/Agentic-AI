@@ -1,25 +1,28 @@
 import streamlit as st
 
 config = {'scrollZoom': True, 'displayModeBar': True, 'displaylogo': False}
-st.set_page_config(page_title="Agentic-AI Chatbot", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
+st.set_page_config(page_title="Agentic AI Chatbot", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
 
 st.write("""
-#### Agentic-AI Chatbot Demo: Tool Calling in Action
+#### A Chatbot That Thinks and Uses Tools
 
-This is a chatbot that can answer your questions using information from documents, Wikipedia, and the internet. It's designed to be a helpful tool for finding information quickly.
+Welcome! This website showcases an AI chatbot that's more than just a question-answerer.
 
-**Click the chatbot page sidebar to access the chatbot.**
+It's designed as a smart assistant, using "tools" to find the best information for your questions.
 
-**How to Use the Chatbot:**
+#### Agentic AI
 
-1.  **Ask a Question:** Type your question in the text box at the bottom of the chatbot window.
-2.  **Press Enter or Click Send:** The chatbot will process your question and provide an answer.
-3.  **Read the Answer:** The chatbot's response will appear in the chat window.
+Unlike typical chatbots, this one leverages Agentic AI principles to:
+
+-   **Understand** your questions in depth.
+-   **Select** the most appropriate tool to find answers from your documents, Wikipedia, or the broader internet.
+-   **Provide** more relevant and accurate responses by combining information from various sources.
+
+Click the pages from the sidebar to learn more about Agentic AI, understand how this chatbot works, and try the interactive demo yourself.
 
 #### More details
 
-
-Check out the code of the chatbot [on Github.](https://github.com/kanad13/LangChain-MultiTool-Agent)
+Check out the code of the chatbot [on Github.](https://github.com/kanad13/Agentic-AI-Chatbot)
 
 Checkout my website for other AI/ML projects - [Kunal-Pathak.com](https://www.kunal-pathak.com).
 				 """)
