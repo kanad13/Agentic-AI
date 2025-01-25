@@ -351,7 +351,6 @@ def stream_query_response(query, debug_mode=False, show_event_data=False, show_t
     except Exception as e: # --- Error Handling ---
         logging.error(f"Error processing response: {e}", exc_info=True) # Log the error using the logging module, including traceback.
         yield "I encountered an error processing your request. Please try again later." # Yield an error message to the user in case of exceptions.
-        # This provides a user-friendly error message instead of crashing the application.
     # ... (rest of stream_query_response) ...
 
 ############§§§§§§§§§§§§§§§§§§§§§############
@@ -394,6 +393,17 @@ with st.sidebar.expander("Help & Display Options",  expanded=True):
     show_event_data = st.checkbox("Show Event Data", value=False) # Checkbox to show raw event data
     st.caption("Show raw communication data from the chatbot agent (technical).") # Description for "Show Event Data"
 
+# --- NEW SECTION: Sample Questions Expander ---
+with st.sidebar.expander("Sample Questions", expanded=True): # Added expander for sample questions, initially collapsed
+
+    sample_questions = [
+        "What are the main causes of climate change?",
+        "Explain the theory of relativity in simple terms.",
+        "What are the benefits of meditation and mindfulness?"
+    ]
+
+    for i, question in enumerate(sample_questions):
+        st.code(f"{question}") # Display question with markdown, each as a separate element
 
 # --- Display Chat History from Session State ---
 for chat in st.session_state.chat_history: # Iterate through chat history
