@@ -1,4 +1,3 @@
-# Import necessary libraries
 import streamlit as st  # For creating web applications
 from dotenv import load_dotenv  # For loading environment variables from a .env file
 import os  # For interacting with the operating system, e.g., environment variables
@@ -275,10 +274,16 @@ st.title("LangChain Chatbot with Streamlit Frontend") # Set the title of the Str
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
-# Sidebar Checkboxes for Debug and Display Options
-show_tool_calls = st.sidebar.checkbox("Show Tool Calls", value=False) # Checkbox to show tool call details
-debug_mode = st.sidebar.checkbox("Show Debug Log", value=False) # Checkbox to enable debug log display
-show_event_data = st.sidebar.checkbox("Show Event Data", value=False) # Checkbox to show raw event data
+# Sidebar Checkboxes and Help Section
+with st.sidebar.expander("Help & Display Options",  expanded=True):
+    show_tool_calls = st.checkbox("Show Tool Calls", value=True) # Checkbox to show tool call details
+    st.caption("Display details of tools used by the chatbot to answer your query.") # Description for "Show Tool Calls"
+
+    debug_mode = st.checkbox("Show Debug Log", value=False) # Checkbox to enable debug log display
+    st.caption("Enable detailed technical logs for debugging and advanced understanding.") # Description for "Show Debug Log"
+
+    show_event_data = st.checkbox("Show Event Data", value=False) # Checkbox to show raw event data
+    st.caption("Show raw communication data from the chatbot agent (technical).") # Description for "Show Event Data"
 
 
 # Display Chat History from Session State
