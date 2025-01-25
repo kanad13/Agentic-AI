@@ -32,7 +32,7 @@ Imagine you ask the chatbot a question. Here's what happens behind the scenes:
 ```mermaid
 graph LR
     A[Your Question] --> B(Chatbot);
-    B --> C{Choose Tool:<br> - Documents?<br> - Wikipedia?<br> - Internet?};
+    B --> C{Choose Tool - Documents,  Wikipedia, Internet?};
     C --> D[Use Selected Tool];
     D --> E[Get Information];
     E --> F[Give You Answer];

@@ -19,7 +19,9 @@ Unlike typical chatbots, this one leverages Agentic AI principles to:
 -   **Provide** more relevant and accurate responses by combining information from various sources.
 
 Click the pages from the sidebar to learn more about Agentic AI, understand how this chatbot works, and try the interactive demo yourself.
+				 """)
 
+st.write("""
 #### More details
 
 Check out the code of the chatbot [on Github.](https://github.com/kanad13/Agentic-AI-Chatbot)
