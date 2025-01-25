@@ -1,97 +1,123 @@
-# LangChain-MultiTool-Agent
+# Agentic AI Chatbot Demo: A Smart Assistant That Uses Tools
 
-**LangChain-MultiTool-Agent** is an advanced AI chatbot that uses LangChain agents and tools to provide intelligent, context-aware responses.
+**Tagline:** See a chatbot that thinks and uses tools to help you find answers! (Code included)
 
-It dynamically decides which tool to invoke - be it a retrieval system, web search, or Wikipedia query - depending on the user's question. This ensures precise and relevant answers every time.
+This project demonstrates an AI chatbot that goes beyond simple question answering. It acts like a smart assistant by using different "tools" to find the best information for your questions.
 
-## Features
+**TRY THE CHATBOT LIVE DEMO HERE**
 
-- **Dynamic Tool Selection**: The agent intelligently decides which tool to use based on the query.
-- **Retrieval-Augmented Generation (RAG)**: Accesses a custom knowledge base with FAISS-backed retrieval for accurate responses.
-- **Web Search Integration**: Searches the internet in real-time for up-to-date answers.
-- **Wikipedia Integration**: Queries Wikipedia for factual and detailed information.
-- **Persistent Memory**: Maintains session context to provide continuity across conversations.
+## What This Chatbot Can Do
 
-## Tech Stack
+- **Understands Your Questions:** The chatbot analyzes what you're asking.
+- **Chooses the Right Tool:** It intelligently selects from different tools to find the answer. These tools include:
+  - **Your Documents:** If you upload documents, it can search within them.
+  - **Wikipedia:** For general knowledge and facts.
+  - **Internet Search:** For up-to-date information on the web.
+- **Gives You Relevant Answers:** It combines information from ALL these tools to provide helpful and accurate responses.
+- **Remembers the Conversation:** It keeps track of your conversation, so you don't have to repeat yourself.
 
-- **[LangChain](https://langchain.com/)**: Framework for building language model applications.
-- **[FAISS](https://github.com/facebookresearch/faiss)**: For efficient vector search and document retrieval.
-- **[HuggingFace Embeddings](https://huggingface.co/sentence-transformers)**: Semantic similarity for knowledge retrieval.
-- **[Streamlit](https://streamlit.io)**: Interactive frontend for user-friendly interactions.
+## How It Works - Like a Smart Detective
 
-## LangChain Tools Used
+Imagine you ask the chatbot a question. Here's what happens behind the scenes:
 
-1. **[RAG Tool](https://python.langchain.com/docs/tutorials/rag/)**: Retrieves information from a pre-defined knowledge base.
-2. **[Search Tool](https://python.langchain.com/docs/integrations/tools/tavily_search/)**: Fetches results from the web.
-3. **[Wikipedia Tool](https://python.langchain.com/docs/integrations/tools/wikipedia/)**: Pulls data from Wikipedia.
-
-## Use Cases
-
-- Quick fact-checking and research.
-- Summarizing complex topics.
-- Answering domain-specific questions with retrieval capabilities.
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/kanad13/LangChain-MultiTool-Agent.git
-   cd LangChain-MultiTool-Agent
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Set up environment variables:
-
-   Create a `.env` file and populate it with your API keys:
-
-   ```env
-   OPENAI_API_KEY=your_openai_key
-   TAVILY_API_KEY=your_tavily_key
-   LANGCHAIN_API_KEY=your_langchain_key
-   ```
-
-4. Run the app locally:
-
-   ```bash
-   streamlit run app.py
-   ```
-
-5. Open your browser to the URL provided by Streamlit.
-
-## Configuration
-
-- **Customizing Tools**: Modify the `tools` list in `app.py` to add or remove tools.
-- **Knowledge Base**: Update the FAISS index with your own documents for domain-specific applications.
-
-## How It Works
-
-1. **Query Input**: The user submits a query through the Streamlit frontend.
-2. **Agent Decision**: The LangChain agent determines the most relevant tool to handle the query.
-3. **Tool Execution**: The selected tool fetches the required data.
-4. **Response Generation**: The agent combines tool output with reasoning to generate the final response.
-
-## License
-
-This project is licensed under the MIT License. See `LICENSE` for details.
-
-## graphs
+1.  **You Ask:** You type your question into the chat.
+2.  **The Chatbot Thinks:** It analyzes your question to figure out what kind of information it needs.
+3.  **Tool Selection:** Based on your question, it chooses the best tool to use:
+    - **Example:** If you ask "What's the weather in Berlin?", it will use the **Internet Search Tool** to get current weather information.
+    - **Example:** If you ask "Explain model collapse?", it might first use the **Document Tool** to check any documents you've provided. If not found, it might use the **Wikipedia Tool** for a general explanation.
+    - **Example:** If you ask "Who would win, Laptop Man or Superman?", it could use both the **Wikipedia Tool** and **Internet Search Tool** to find information about each character.
+4.  **Tool in Action:** The chosen tool searches for the information.
+5.  **Getting the Answer:** The chatbot takes the information from the tool and crafts a clear answer for you.
 
 ```mermaid
 graph LR
-    A[User Query] --> B(Chatbot Agent);
-    B --> C{Tool Invocation?};
-    C -- Yes --> D[Tool Execution];
-    D --> E(Tool Result);
-    E --> F(Chatbot Agent);
-    C -- No --> F;
-    F --> G[User Answer];
+    A[Your Question] --> B(Chatbot);
+    B --> C{Choose Tool - Documents,  Wikipedia, Internet?};
+    C --> D[Use Selected Tool];
+    D --> E[Get Information];
+    E --> F[Give You Answer];
 ```
+
+## Agent Actions: Beyond Just Answering Questions
+
+This chatbot also demonstrates a key feature of "Agentic AI": **taking actions**. While it answers your questions, it can also perform simple tasks.
+
+**Example Action: Reporting to GitHub**
+
+To show this "action" capability, the chatbot does something a real assistant might do: it can create a report on GitHub. You can see some of the questions and answers that the chatbot has answered here - `link to github repo issues tab`
+
+**Think of it this way:** Creating a GitHub issue is a simplified example of how an AI assistant could perform other actions for you, like:
+
+- Sending an email.
+- Updating a document.
+- Booking a flight (in a more complex system).
+
+It's about the AI being able to _do_ things, not just talk.
+
+## What is "Agentic AI"?
+
+"Agentic AI" is about making AI more like a helpful assistant that can think and act for itself, not just follow simple commands.
+
+Key ideas of Agentic AI:
+
+- **Understanding:** The AI can understand information from its surroundings (like text, web pages, etc.).
+- **Planning:** It can make plans to achieve a goal, like answering your question or performing a task.
+- **Acting:** It can take actions on its own using "tools" to get things done.
+- **Learning:** It can learn and improve over time.
+
+Instead of just reacting to your every instruction, an Agentic AI can take initiative to help you in a more proactive and intelligent way.
+
+```mermaid
+graph LR
+    A[Understand Information] --> B[Make a Plan];
+    B --> C[Take Action - Use Tools];
+    C --> D[Learn & Improve];
+    D --> A;
+```
+
+## What is "Tool Calling"?
+
+To be truly helpful, a smart assistant needs the right tools.
+
+"Tool Calling" is giving the AI chatbot access to resources it can use to find information or perform actions.
+
+Think of it like giving a student access to:
+
+- **Books and Documents:** To find specific information in texts.
+- **Wikipedia:** To look up general knowledge.
+- **Internet Search:** To find the latest information online.
+
+"Tool Calling" means the AI can:
+
+1.  **Realize it needs help:** It understands when it needs to look something up.
+2.  **Choose the best tool:** It picks the right tool for the job (like searching the internet for weather).
+3.  **Use the tool:** It uses the tool to get the information it needs.
+4.  **Give you a better answer:** It uses the tool's results to answer your question more accurately and thoroughly.
+
+It's how we make AI more resourceful and capable of going beyond its built-in knowledge.
+
+```mermaid
+graph LR
+    A[Chatbot Needs Info] --> B[Choose a Tool e.g., Search];
+    B --> C[Use the Tool];
+    C --> D[Get Information from Tool];
+    D --> E[Use Info to Answer You];
+```
+
+## How this Chatbot implements Agentic AI and Tool Calling
+
+The code in this repository is used to build a simple chatbot to demonstrate how Agentic AI & Tool Calling works.
+
+**Try the Chatbot Live Demo Here**
+
+**How does the Agentic chatbot work?**
+
+- **It Chooses Tools:** When you ask a question, the chatbot decides if it needs to use special tools to find the answer. It doesn't just guess!
+- **It Acts on its Own:** It can automatically use these tools:
+  - **Document Tool:** To read stories or documents you give it.
+  - **Wikipedia Tool:** To check Wikipedia for facts.
+  - **Internet Tool:** To search the web for up-to-date info.
+- **It Has a Goal:** The chatbot tries its best to answer your questions using all the resources it has.
 
 ```mermaid
 graph LR
@@ -110,3 +136,21 @@ graph LR
     E --> I;
     I --> J[User Answer];
 ```
+
+**How it shows Tool Calling:**
+
+- **It Has "Tools":** The code gives the chatbot three tools: a Document Tool, a Wikipedia Tool, and an Internet Tool.
+- **It Uses Tools Smartly:** The chatbot figures out which tool (or tools) will be most helpful to answer your question.
+
+## Tech Stack
+
+- **[LangChain](https://langchain.com/)**: Framework for building language model applications.
+- **[FAISS](https://github.com/facebookresearch/faiss)**: For efficient vector search and document retrieval.
+- **[HuggingFace Embeddings](https://huggingface.co/sentence-transformers)**: Semantic similarity for knowledge retrieval.
+- **[Streamlit](https://streamlit.io)**: Interactive frontend for user-friendly interactions.
+
+## LangChain Tools Used
+
+1. **[RAG Tool](https://python.langchain.com/docs/tutorials/rag/)**: Retrieves information from a pre-defined knowledge base.
+2. **[Search Tool](https://python.langchain.com/docs/integrations/tools/tavily_search/)**: Fetches results from the web.
+3. **[Wikipedia Tool](https://python.langchain.com/docs/integrations/tools/wikipedia/)**: Pulls data from Wikipedia.

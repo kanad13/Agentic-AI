@@ -40,3 +40,4 @@ pypdf
 #chromadb
 #langchain-text-splitters
 streamlit
+streamlit-mermaid
