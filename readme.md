@@ -1,10 +1,8 @@
-# Agentic AI Chatbot Demo: A Smart Assistant That Uses Tools
-
-**Tagline:** See a chatbot that thinks and uses tools to help you find answers! (Code included)
+# Agentic AI Chatbot: A Smart Assistant That Uses Tools
 
 This project demonstrates an AI chatbot that goes beyond simple question answering. It acts like a smart assistant by using different "tools" to find the best information for your questions.
 
-**TRY THE CHATBOT LIVE DEMO HERE**
+**[TRY THE CHATBOT LIVE DEMO HERE](https://agentic-ai.streamlit.app/Contact_Me)**
 
 ## What This Chatbot Can Do
 

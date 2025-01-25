@@ -14,9 +14,9 @@ It's designed as a smart assistant, using "tools" to find the best information f
 
 Unlike typical chatbots, this one leverages Agentic AI principles to:
 
--   **Understand** your questions in depth.
--   **Select** the most appropriate tool to find answers from your documents, Wikipedia, or the broader internet.
--   **Provide** more relevant and accurate responses by combining information from various sources.
+- **Understand** your questions in depth.
+- **Select** the most appropriate tool to find answers from your documents, Wikipedia, or the broader internet.
+- **Provide** more relevant and accurate responses by combining information from various sources.
 
 Click the pages from the sidebar to learn more about Agentic AI, understand how this chatbot works, and try the interactive demo yourself.
 				 """)
@@ -24,7 +24,7 @@ Click the pages from the sidebar to learn more about Agentic AI, understand how 
 st.write("""
 #### More details
 
-[Check out the code of the chatbot on Github.](https://github.com/kanad13/Agentic-AI-Chatbot)
+[Check out the code of the chatbot on Github.](https://github.com/kanad13/Agentic-AI)
 
 Checkout my website for other AI/ML projects - [Kunal-Pathak.com](https://www.kunal-pathak.com).
 				 """)

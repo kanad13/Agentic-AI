@@ -359,7 +359,8 @@ if 'event_data' not in st.session_state:
     st.session_state.event_data = None # Initialize event_data.
 
 # --- Streamlit App Description ---
-st.write("This page demonstrates an AI chatbot using different language models and tools. Enable 'Show Tool Calls' and 'Show Debug Log' in the sidebar to see the agent's workings.")
+st.title("Agentic AI Chatbot: A Smart Assistant That Uses Tools")
+#st.write("This page demonstrates an AI chatbot using different language models and tools. Enable 'Show Tool Calls' and 'Show Debug Log' in the sidebar to see the agent's workings.")
 
 ############§§§§§§§§§§§§§§§§§§§§§############
 
@@ -401,7 +402,8 @@ if user_input := st.chat_input("You:"):
             full_response = response
             response_placeholder.markdown(full_response)
 else:
-    st.write("Start with sample questions or ask your own:") # Guide users.
+    #st.write("Start with sample questions or ask your own:") # Guide users.
+    pass
 
     col1, col2, col3 = st.columns(3) # Columns for buttons.
 

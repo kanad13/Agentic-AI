@@ -25,5 +25,5 @@ st.write("""
 
 To show this "action" capability, the chatbot does something a real assistant might do: it can create a report on GitHub.
 
-You can see some of the questions and answers that the chatbot has answered here - `link to github repo issues tab`
+You can see some of the questions and answers that the [chatbot has answered here](https://github.com/kanad1323/agentic-ai-output/issues).
 				 """)
