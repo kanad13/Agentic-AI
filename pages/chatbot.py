@@ -302,12 +302,11 @@ if user_input := st.chat_input("You:"): # Get user input from the chat input box
     # Placeholder for Bot Response
     with st.chat_message("assistant"): # Create a chat message container for the assistant
         response_placeholder = st.empty() # Create an empty placeholder within the assistant chat message
-
-    # Stream and Display Chatbot Response
-    full_response = "" # Initialize full response string
-    for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls): # Stream chatbot responses
-        full_response = response # Accumulate full response
-        response_placeholder.markdown(response) # Update the placeholder with the streamed response
+        full_response = ""  # Initialize an empty full response
+        with st.spinner("Thinking..."): # Display a spinner while waiting for the response
+          for response in stream_query_response(user_input, debug_mode=debug_mode, show_event_data=show_event_data, show_tool_calls=show_tool_calls): # Stream chatbot responses
+            full_response = response  # Accumulate full response
+            response_placeholder.markdown(full_response) # Update the placeholder with the accumulated response
 
 # Conditional Display of Debug and Tool Call Output Expanders
 if show_tool_calls: # Conditionally display tool calls output
