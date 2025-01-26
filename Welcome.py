@@ -4,27 +4,75 @@ config = {'scrollZoom': True, 'displayModeBar': True, 'displaylogo': False}
 st.set_page_config(page_title="Agentic AI Chatbot", page_icon=":chat-plus-outline:", layout="wide", initial_sidebar_state="expanded", menu_items=None)
 
 st.write("""
-#### A Chatbot That Thinks and Uses Tools
+#### Welcome to Agentic AI: AI That Acts
 
-Welcome! This website showcases an AI chatbot that's more than just a question-answerer.
+You are likely familiar with AI like Siri or Alexa that responds to your questions.  Agentic AI is a step beyond this.
 
-It's designed as a smart assistant, using "tools" to find the best information for your questions.
+**Agentic AI is designed to take actions, not just react.**
 
-#### Agentic AI
+Consider this difference:
 
-Unlike typical chatbots, this one leverages Agentic AI principles to:
+- **Typical AI (like Siri):** You ask "What is the weather?" and it replies. It waits for your instruction.
+- **Agentic AI:** You might say "Plan a beach trip next weekend." Agentic AI would then perform actions for you.  It could:
+    - **Research** beaches.
+    - **Check** flight and hotel availability.
+    - **Compare prices.**
+    - **Book reservations (with your approval).**
 
-- **Understand** your questions in depth.
-- **Select** the most appropriate tool to find answers from your documents, Wikipedia, or the broader internet.
-- **Provide** more relevant and accurate responses by combining information from various sources.
+**The core idea is AI that can set goals and act to achieve them independently.**
 
-Click the pages from the sidebar to learn more about Agentic AI, understand how this chatbot works, and try the interactive demo yourself.
+---
+
+#### Examples of Agentic AI Concepts
+
+You might have heard of Agentic AI in examples like:
+
+- **Claude's "Computer Use":**  This lets you ask Claude to perform tasks directly on a computer, like ordering food online. [Youtube Video](https://youtu.be/ODaHJzOyVCQ?t=37)
+- **OpenAI's "Operator":** This AI can browse the internet to complete tasks for you, such as booking flights. [Youtube Video](https://youtu.be/CSE77wAdDLg?t=136)
+
+These are examples of AI designed to take actions to assist you.
+
+---
+
+####  This Chatbot Demonstrates Agentic AI Basics
+
+This chatbot I built is a simplified example to show these basic concepts.  It demonstrates how AI can be designed to take actions in a clear way.
+
+It is a practical demonstration, not a fully advanced agent, designed for understanding the fundamental principles.
+
+---
+
+####  How This Chatbot Works
+
+This chatbot acts like a basic agent by doing these things:
+
+* **Decision Making:**  When you ask a question, the chatbot decides how to find an answer.
+* **Information Access:** It can automatically:
+    * **Read documents** that you provide.
+    * **Check Wikipedia** for information.
+    * **Search the internet** for current information.
+* **Goal Orientation:** The chatbot aims to answer your questions using these methods.
+
+---
+
+####  Agentic Action Example
+
+To show action, this chatbot can create a report on GitHub.  This illustrates AI performing tasks, not just providing information.
+
+See examples of questions and chatbot responses here: [Chatbot Question Examples](https://github.com/kanad1323/agentic-ai-output/issues).
+
+---
+
+####  Explore Agentic AI
+
+Navigate to the "Agentic Chatbot" page in the sidebar.  Ask questions to see how it finds information and demonstrates agentic behavior.
+
 				 """)
 
 st.write("""
-#### More details
+#### Learn More and Build Your Own
 
-[Check out the code of the chatbot on Github.](https://github.com/kanad13/Agentic-AI)
+[Check out the chatbot code on Github.](https://github.com/kanad13/Agentic-AI)
 
 Checkout my website for other AI/ML projects - [Kunal-Pathak.com](https://www.kunal-pathak.com).
 				 """)
