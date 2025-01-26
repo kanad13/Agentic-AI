@@ -1,69 +1,66 @@
-# Agentic AI Chatbot: A Smart Assistant That Uses Tools
+# Welcome to Agentic AI: AI That Acts
 
-This project demonstrates an AI chatbot that goes beyond simple question answering. It acts like a smart assistant by using different "tools" to find the best information for your questions.
+You are familiar with AI assistant like Siri or Alexa that responds to your questions. Agentic AI is a step beyond this.
 
-**[TRY THE CHATBOT LIVE DEMO HERE](https://agentic-ai.streamlit.app)**
+**Agentic AI is designed to take actions, not just react.**
 
-## What This Chatbot Can Do
+Consider this difference:
 
-- **Understands Your Questions:** The chatbot analyzes what you're asking.
-- **Chooses the Right Tool:** It intelligently selects from different tools to find the answer. These tools include:
-  - **Your Documents:** If you upload documents, it can search within them.
-  - **Wikipedia:** For general knowledge and facts.
-  - **Internet Search:** For up-to-date information on the web.
-- **Gives You Relevant Answers:** It combines information from ALL these tools to provide helpful and accurate responses.
-- **Remembers the Conversation:** It keeps track of your conversation, so you don't have to repeat yourself.
+- **Typical AI (like Siri):** You ask "What is the weather?" and it replies. It waits for your instruction.
+- **Agentic AI:** You might say "Plan a beach trip next weekend." Agentic AI would then perform actions for you. It could:
+  - **Research** beaches.
+  - **Check** flight and hotel availability.
+  - **Compare prices.**
+  - **Book reservations (with your approval).**
 
-## How It Works - Like a Smart Detective
+**The core idea is AI that can set goals and act to achieve them independently.**
 
-Imagine you ask the chatbot a question. Here's what happens behind the scenes:
+## The Agentic Chatbot I built
 
-1.  **You Ask:** You type your question into the chat.
-2.  **The Chatbot Thinks:** It analyzes your question to figure out what kind of information it needs.
-3.  **Tool Selection:** Based on your question, it chooses the best tool to use:
-    - **Example:** If you ask "What's the weather in Berlin?", it will use the **Internet Search Tool** to get current weather information.
-    - **Example:** If you ask "Explain model collapse?", it might first use the **Document Tool** to check any documents you've provided. If not found, it might use the **Wikipedia Tool** for a general explanation.
-    - **Example:** If you ask "Who would win, Laptop Man or Superman?", it could use both the **Wikipedia Tool** and **Internet Search Tool** to find information about each character.
-4.  **Tool in Action:** The chosen tool searches for the information.
-5.  **Getting the Answer:** The chatbot takes the information from the tool and crafts a clear answer for you.
+I built an Agentic AI chatbot to demonstrate basic Agentic AI concepts.
 
-```mermaid
-graph LR
-    A[Your Question] --> B(Chatbot);
-    B --> C{Choose Tool - Documents,  Wikipedia, Internet?};
-    C --> D[Use Selected Tool];
-    D --> E[Get Information];
-    E --> F[Give You Answer];
-```
+`This repository contains the code for that chatbot.`
 
-## Agent Actions: Beyond Just Answering Questions
+[CHECK OUT THE AGENTIC CHATBOT HERE.](https://agentic-ai.streamlit.app/)
 
-This chatbot also demonstrates a key feature of "Agentic AI": **taking actions**. While it answers your questions, it can also perform simple tasks.
+#### How My Chatbot Demonstrates Agentic Behavior
 
-**Example Action: Reporting to GitHub**
+My chatbot acts as a basic agent by:
 
-To show this "action" capability, the chatbot does something a real assistant might do: it can create a report on GitHub. You can see some of the questions and answers that the chatbot has answered here - `link to github repo issues tab`
+- **Deciding how to answer:**
+  - When you ask a question, the chatbot determines the best way to find the answer.
+- **Accessing Information:** It can automatically:
+  - Read provided documents.
+  - Check Wikipedia.
+  - Search the internet.
+- **Agentic Action:**
+  - The chatbot does not just stop at finding information, but it shows AI performing tasks, not just providing information.
+  - The [chatbot creates issues in Github](https://github.com/kanad1323/agentic-ai-output/issues) with the answers it comes up with.
 
-**Think of it this way:** Creating a GitHub issue is a simplified example of how an AI assistant could perform other actions for you, like:
+#### Examples of Agentic AI Concepts
 
-- Sending an email.
-- Updating a document.
-- Booking a flight (in a more complex system).
+You might have heard of Agentic AI in examples like:
 
-It's about the AI being able to _do_ things, not just talk.
+- **Claude's "Computer Use":** This lets you ask Claude to perform tasks directly on a computer, like ordering food online. [Youtube Video](https://youtu.be/ODaHJzOyVCQ?t=37)
+- **OpenAI's "Operator":** This AI can browse the internet to complete tasks for you, such as booking flights. [Youtube Video](https://youtu.be/CSE77wAdDLg?t=136)
 
-## What is "Agentic AI"?
+These are examples of AI designed to take actions to assist you.
 
-"Agentic AI" is about making AI more like a helpful assistant that can think and act for itself, not just follow simple commands.
+## Under the hood
 
-Key ideas of Agentic AI:
+This section provides a technical overview of the Agentic AI Chatbot I have built.
 
-- **Understanding:** The AI can understand information from its surroundings (like text, web pages, etc.).
-- **Planning:** It can make plans to achieve a goal, like answering your question or performing a task.
-- **Acting:** It can take actions on its own using "tools" to get things done.
-- **Learning:** It can learn and improve over time.
+### Core Framework: Langchain
 
-Instead of just reacting to your every instruction, an Agentic AI can take initiative to help you in a more proactive and intelligent way.
+The chatbot is built using [Langchain](https://python.langchain.com/docs/introduction/).
+Langchain simplifies the process of creating complex AI agent workflows by providing tools and abstractions for:
+
+- **Integrating Language Models:** Connecting to various language models like OpenAI, Google, and Groq.
+- **Tool Management:** Defining and using tools to extend the agent's capabilities.
+- **Memory Management:** Handling conversation history and agent state.
+- **Agent Logic:** Structuring the agent's decision-making process.
+
+Langchain serves as the foundational layer for my chatbot, orchestrating the different components of the chatbot to work together effectively.
 
 ```mermaid
 graph LR
@@ -73,49 +70,36 @@ graph LR
     D --> A;
 ```
 
-## What is "Tool Calling"?
+### Language Models (LLMs)
 
-To be truly helpful, a smart assistant needs the right tools.
+Large Language Models (LLMs) models are the "brain" of the chatbot, responsible for:
 
-"Tool Calling" is giving the AI chatbot access to resources it can use to find information or perform actions.
+- **Understanding User Input:** Processing and interpreting your questions.
+- **Generating Text:** Crafting responses, performing reasoning, and formulating actions.
 
-Think of it like giving a student access to:
+You can select from different LLMs in the sidebar, including:
 
-- **Books and Documents:** To find specific information in texts.
-- **Wikipedia:** To look up general knowledge.
-- **Internet Search:** To find the latest information online.
+- OpenAI GPT-4o
+- Meta Llama-3.1
+- Google Gemma-2
 
-"Tool Calling" means the AI can:
+### Tools: Extending Agent Capabilities
 
-1.  **Realize it needs help:** It understands when it needs to look something up.
-2.  **Choose the best tool:** It picks the right tool for the job (like searching the internet for weather).
-3.  **Use the tool:** It uses the tool to get the information it needs.
-4.  **Give you a better answer:** It uses the tool's results to answer your question more accurately and thoroughly.
+To go beyond simply answering questions, the chatbot utilizes **tools**.
 
-It's how we make AI more resourceful and capable of going beyond its built-in knowledge.
+Tools provide the agent with access to external information and the ability to perform actions. The chatbot is equipped with the following tools:
 
-```mermaid
-graph LR
-    A[Chatbot Needs Info] --> B[Choose a Tool e.g., Search];
-    B --> C[Use the Tool];
-    C --> D[Get Information from Tool];
-    D --> E[Use Info to Answer You];
-```
+- **Document Retriever:** This tool allows the agent to access and search the documents you provide in the "input_files" directory.
 
-## How this Chatbot implements Agentic AI and Tool Calling
+  - [Retrieval-Augmented Generation (RAG)](https://python.langchain.com/docs/tutorials/rag/#setup): The agent uses these documents to inform its answers, ensuring responses are grounded in provided information.
+  - [Vector Store (FAISS)](https://faiss.ai): For efficient searching of documents, the chatbot uses a FAISS vector store. Documents are converted into numerical vector representations using embeddings.
+  - [Embeddings (HuggingFace)](https://huggingface.co/sentence-transformers/all-mpnet-base-v2): HuggingFace embeddings are used to create vector representations of text, enabling semantic similarity search within the document store.
 
-The code in this repository is used to build a simple chatbot to demonstrate how Agentic AI & Tool Calling works.
+- **General Knowledge Access:** This tool enables the agent to search and retrieve information from **Wikipedia**.
 
-**Try the Chatbot Live Demo Here**
+  - [Wikipedia Retriever](https://python.langchain.com/docs/integrations/retrievers/wikipedia/): Provides access to a vast repository of general knowledge for answering a wide range of queries.
 
-**How does the Agentic chatbot work?**
-
-- **It Chooses Tools:** When you ask a question, the chatbot decides if it needs to use special tools to find the answer. It doesn't just guess!
-- **It Acts on its Own:** It can automatically use these tools:
-  - **Document Tool:** To read stories or documents you give it.
-  - **Wikipedia Tool:** To check Wikipedia for facts.
-  - **Internet Tool:** To search the web for up-to-date info.
-- **It Has a Goal:** The chatbot tries its best to answer your questions using all the resources it has.
+- **Internet Search:** This tool allows the agent to perform real-time searches on the **internet** using the Tavily Search API. - [Tavily Tool](https://python.langchain.com/docs/integrations/tools/tavily_search): Enables the agent to access current information and answer questions requiring real-time data.
 
 ```mermaid
 graph LR
@@ -135,20 +119,42 @@ graph LR
     I --> J[User Answer];
 ```
 
-**How it shows Tool Calling:**
+### Agent Workflow: ReAct Logic
 
-- **It Has "Tools":** The code gives the chatbot three tools: a Document Tool, a Wikipedia Tool, and an Internet Tool.
-- **It Uses Tools Smartly:** The chatbot figures out which tool (or tools) will be most helpful to answer your question.
+The chatbot operates using a **ReAct** (Reason, Act, Observe) framework. [This framework](https://langchain-ai.github.io/langgraph/reference/prebuilt) defines the agent's decision-making process:
 
-## Tech Stack
+1.  **Reason:** The agent analyzes your question and determines the best course of action to answer it. This may involve deciding which tool to use, or if direct generation is sufficient.
+2.  **Act:** Based on its reasoning, the agent takes an action. This could be:
+    - Using a tool (Document Retriever, Wikipedia, Internet Search) to gather information.
+    - Generating a direct text response if it has enough information.
+3.  **Observe:** The agent observes the outcome of its action.
+    - If a tool was used, it processes the information retrieved by the tool.
+    - If it generated a response, it prepares to present it to the user.
 
-- **[LangChain](https://langchain.com/)**: Framework for building language model applications.
-- **[FAISS](https://github.com/facebookresearch/faiss)**: For efficient vector search and document retrieval.
-- **[HuggingFace Embeddings](https://huggingface.co/sentence-transformers)**: Semantic similarity for knowledge retrieval.
-- **[Streamlit](https://streamlit.io)**: Interactive frontend for user-friendly interactions.
+This process is guided by a [Prompt Template](https://python.langchain.com/docs/concepts/prompt_templates/), which provides instructions to the agent on how to use tools, prioritize information sources, and format its responses.
 
-## LangChain Tools Used
+### Memory and Conversation History
 
-1. **[RAG Tool](https://python.langchain.com/docs/tutorials/rag/)**: Retrieves information from a pre-defined knowledge base.
-2. **[Search Tool](https://python.langchain.com/docs/integrations/tools/tavily_search/)**: Fetches results from the web.
-3. **[Wikipedia Tool](https://python.langchain.com/docs/integrations/tools/wikipedia/)**: Pulls data from Wikipedia.
+To maintain context and have coherent conversations, the chatbot utilizes **memory**.
+
+- **MemorySaver:** The [MemorySaver](https://python.langchain.com/docs/how_to/chatbots_memory/) component is used to store the history of your conversation with the chatbot.
+- **Contextual Conversations:** This memory allows the chatbot to remember previous turns in the conversation, enabling it to understand follow-up questions and maintain context throughout the interaction.
+
+Each conversation is assigned a unique ID, ensuring that chat history is correctly tracked and managed for each user session.
+
+### Agentic Action: GitHub Issue Creation
+
+A key demonstration of the chatbot's agentic nature is its ability to **create GitHub issues**.
+
+- **Beyond Information Retrieval:** Instead of simply providing information, the chatbot can take actions based on its responses.
+- **Issue Reporting:** In this demonstration, the chatbot automatically [creates a GitHub issue](https://github.com/kanad1323/agentic-ai-output/issues) with your question as the title and its answer as the body.
+- **Action-Oriented AI:** This feature highlights the potential of Agentic AI to perform tasks and initiate actions, moving beyond traditional question-answering systems.
+
+### Conclusion
+
+The Agentic AI Chatbot is built using a combination of Langchain, Large Language Models, and specialized tools. Its architecture is designed to:
+
+- **Access and Process Information:** From provided documents, Wikipedia, and the internet.
+- **Reason and Act:** Using the ReAct framework to make decisions and take actions.
+- **Maintain Context:** Remembering conversation history for more engaging interactions.
+- **Demonstrate Agentic Behavior:** By performing actions like creating GitHub issues.

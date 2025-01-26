@@ -359,7 +359,7 @@ if 'event_data' not in st.session_state:
     st.session_state.event_data = None # Initialize event_data.
 
 # --- Streamlit App Description ---
-st.title("Agentic AI Chatbot: A Smart Assistant That Uses Tools")
+st.title("Agentic AI Chatbot: autonomous agent that takes actions")
 #st.write("This page demonstrates an AI chatbot using different language models and tools. Enable 'Show Tool Calls' and 'Show Debug Log' in the sidebar to see the agent's workings.")
 
 ############§§§§§§§§§§§§§§§§§§§§§############

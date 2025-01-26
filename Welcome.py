@@ -6,7 +6,7 @@ st.set_page_config(page_title="Agentic AI Chatbot", page_icon=":chat-plus-outlin
 st.write("""
 #### Welcome to Agentic AI: AI That Acts
 
-You are likely familiar with AI like Siri or Alexa that responds to your questions.  Agentic AI is a step beyond this.
+You are familiar with AI assistant like Siri or Alexa that responds to your questions.  Agentic AI is a step beyond this.
 
 **Agentic AI is designed to take actions, not just react.**
 
@@ -23,6 +23,31 @@ Consider this difference:
 
 ---
 
+#### The Agentic Chatbot I built
+
+You are right now viewing an Agentic AI chatbot I built to demonstrate basic Agentic AI concepts.
+
+Navigate to the "Agentic Chatbot" page in the sidebar.  Ask questions to see how it finds information and demonstrates agentic behavior.
+
+---
+
+#### How My Chatbot Demonstrates Agentic Behavior
+
+My chatbot acts as a basic agent by:
+
+- **Deciding how to answer:**
+    - When you ask a question, the chatbot determines the best way to find the answer.
+- **Accessing Information:** It can automatically:
+    - Read provided documents.
+    - Check Wikipedia.
+    - Search the internet.
+- **Agentic Action:**
+    - The chatbot does not just stop at finding information, but it shows AI performing tasks, not just providing information.
+    - The [chatbot creates issues in Github](https://github.com/kanad1323/agentic-ai-output/issues) with the answers it comes up with.
+
+
+---
+
 #### Examples of Agentic AI Concepts
 
 You might have heard of Agentic AI in examples like:
@@ -32,47 +57,4 @@ You might have heard of Agentic AI in examples like:
 
 These are examples of AI designed to take actions to assist you.
 
----
-
-####  This Chatbot Demonstrates Agentic AI Basics
-
-This chatbot I built is a simplified example to show these basic concepts.  It demonstrates how AI can be designed to take actions in a clear way.
-
-It is a practical demonstration, not a fully advanced agent, designed for understanding the fundamental principles.
-
----
-
-####  How This Chatbot Works
-
-This chatbot acts like a basic agent by doing these things:
-
-* **Decision Making:**  When you ask a question, the chatbot decides how to find an answer.
-* **Information Access:** It can automatically:
-    * **Read documents** that you provide.
-    * **Check Wikipedia** for information.
-    * **Search the internet** for current information.
-* **Goal Orientation:** The chatbot aims to answer your questions using these methods.
-
----
-
-####  Agentic Action Example
-
-To show action, this chatbot can create a report on GitHub.  This illustrates AI performing tasks, not just providing information.
-
-See examples of questions and chatbot responses here: [Chatbot Question Examples](https://github.com/kanad1323/agentic-ai-output/issues).
-
----
-
-####  Explore Agentic AI
-
-Navigate to the "Agentic Chatbot" page in the sidebar.  Ask questions to see how it finds information and demonstrates agentic behavior.
-
-				 """)
-
-st.write("""
-#### Learn More and Build Your Own
-
-[Check out the chatbot code on Github.](https://github.com/kanad13/Agentic-AI)
-
-Checkout my website for other AI/ML projects - [Kunal-Pathak.com](https://www.kunal-pathak.com).
 				 """)
