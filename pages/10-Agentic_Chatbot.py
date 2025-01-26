@@ -384,7 +384,7 @@ for chat in st.session_state.chat_history:
             st.write(chat['bot'])
 
 # --- User Input Handling ---
-if user_input := st.chat_input("You:"):
+if user_input := st.chat_input("A:"):
     # Append user message to chat history
     st.session_state.chat_history.append({"user": user_input, "bot": ""})
     latest_index = len(st.session_state.chat_history) - 1

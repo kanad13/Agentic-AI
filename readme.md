@@ -1,19 +1,19 @@
-# Welcome to Agentic AI: AI That Acts
+# Welcome to Agentic AI: AI that Acts
 
-You are familiar with AI assistant like Siri or Alexa that responds to your questions. Agentic AI is a step beyond this.
+You are familiar with AI assistants like Siri or Alexa that respond to your questions. Agentic AI is a step beyond this.
 
 **Agentic AI is designed to take actions, not just react.**
 
 Consider this difference:
 
-- **Typical AI (like Siri):** You ask "What is the weather?" and it replies. It waits for your instruction.
+- **Typical AI (like Siri):** You ask "What is the weather?" and it replies. It waits for your questions.
 - **Agentic AI:** You might say "Plan a beach trip next weekend." Agentic AI would then perform actions for you. It could:
   - **Research** beaches.
   - **Check** flight and hotel availability.
   - **Compare prices.**
   - **Book reservations (with your approval).**
 
-**The core idea is AI that can set goals and act to achieve them independently.**
+**The core idea is that AI can set goals and act to achieve them independently.**
 
 ## The Agentic Chatbot I built
 
@@ -23,7 +23,7 @@ I built an Agentic AI chatbot to demonstrate basic Agentic AI concepts.
 
 [CHECK OUT THE AGENTIC CHATBOT HERE.](https://agentic-ai.streamlit.app/)
 
-#### How My Chatbot Demonstrates Agentic Behavior
+## How My Chatbot Demonstrates Agentic Behavior
 
 My chatbot acts as a basic agent by:
 
@@ -34,10 +34,10 @@ My chatbot acts as a basic agent by:
   - Check Wikipedia.
   - Search the internet.
 - **Agentic Action:**
-  - The chatbot does not just stop at finding information, but it shows AI performing tasks, not just providing information.
-  - The [chatbot creates issues in Github](https://github.com/kanad1323/agentic-ai-output/issues) with the answers it comes up with.
+  - The chatbot does not just stop at finding information, but it also performs actions in your behalf.
+  - The [chatbot creates issues in Github](https://github.com/kanad1323/agentic-ai-output/issues) based on the interactions it had with you and the instructions you gave.
 
-#### Examples of Agentic AI Concepts
+## Examples of Agentic AI Concepts
 
 You might have heard of Agentic AI in examples like:
 
@@ -85,7 +85,7 @@ You can select from different LLMs in the sidebar, including:
 
 ### Tools: Extending Agent Capabilities
 
-To go beyond simply answering questions, the chatbot utilizes **tools**.
+To go beyond simply answering questions, the chatbot utilizes [tool calling](https://python.langchain.com/docs/concepts/tool_calling/).
 
 Tools provide the agent with access to external information and the ability to perform actions. The chatbot is equipped with the following tools:
 

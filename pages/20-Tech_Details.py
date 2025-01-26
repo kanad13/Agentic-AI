@@ -39,7 +39,7 @@ You can select from different LLMs in the sidebar, including:
 
 #### Tools: Extending Agent Capabilities
 
-To go beyond simply answering questions, the chatbot utilizes **tools**.
+To go beyond simply answering questions, the chatbot utilizes [tool calling](https://python.langchain.com/docs/concepts/tool_calling/).
 
 Tools provide the agent with access to external information and the ability to perform actions. The chatbot is equipped with the following tools:
 
