@@ -62,7 +62,7 @@ selected_model = st.sidebar.selectbox(
 
 # Initialize Chat Model based on user selection
 if selected_model == "OpenAI GPT-4o":
-    model = ChatOpenAI(model="gpt-4o-mini", openai_api_key=OPENAI_API_KEY) # Use OpenAI GPT-4o model.
+    model = ChatOpenAI(model="gpt-4.1-nano-2025-04-14", openai_api_key=OPENAI_API_KEY) # Use OpenAI GPT-4o model.
 elif selected_model == "Meta Llama-3.1":
     model = ChatGroq(model="llama-3.1-8b-instant", api_key=GROQ_API_KEY) # Use Groq Gemma model.
 elif selected_model == "Google Gemma-2":
