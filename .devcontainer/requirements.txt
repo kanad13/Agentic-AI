@@ -22,6 +22,7 @@ langchain-google-genai
 langgraph
 langgraph-cli
 wikipedia
+langchain-tavily
 
 #nlp
 #torch --pre -f https://download.pytorch.org/whl/nightly/cpu

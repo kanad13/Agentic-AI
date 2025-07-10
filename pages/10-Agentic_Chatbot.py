@@ -5,6 +5,7 @@ import uuid  # Generate unique identifiers
 import logging # Logging events and errors
 from dotenv import load_dotenv  # Load environment variables from .env file
 import requests # For making HTTP requests
+import time # For adding delays
 
 # --- Langchain Framework ---
 from langchain_openai import ChatOpenAI  # OpenAI chat model integration
@@ -15,7 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter  # Split tex
 from langchain_huggingface import HuggingFaceEmbeddings  # Hugging Face embeddings for text to vectors
 from langchain_community.vectorstores import FAISS  # FAISS vector store for efficient similarity search
 from langchain.tools.retriever import create_retriever_tool  # Create Langchain tools from retrievers
-from langchain_community.tools.tavily_search import TavilySearchResults  # Tavily Search tool for web search
+from langchain_tavily import TavilySearch  # Tavily Search tool for web search
 from langchain_community.retrievers import WikipediaRetriever # Retriever for Wikipedia content
 from langgraph.checkpoint.memory import MemorySaver  # Persist agent states in memory for conversation history
 from langgraph.prebuilt import create_react_agent  # Create ReAct agents
@@ -131,7 +132,7 @@ retriever_tool = create_retriever_tool(
 )
 
 # Internet Search Tool (Tavily)
-internet_search_tool = TavilySearchResults(
+internet_search_tool = TavilySearch(
     max_results=2, # Limit search results to 2.
     search_depth="advanced", # More thorough internet search.
     include_answer=True, # Include direct answer from search results if available.
@@ -219,6 +220,9 @@ def create_github_issue(title, body, tool_calls_comment=None, debug_log_comment=
 
         if issue_number:
             logging.info(f"GitHub issue created: {issue_json.get('html_url')}") # Log issue creation.
+            
+            # Add delay to allow GitHub API to propagate the issue
+            time.sleep(2)
 
             comments_to_add = {
                 "Show Tool Calls": tool_calls_comment, # Tool calls comment.
